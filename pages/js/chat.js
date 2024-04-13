@@ -8,9 +8,34 @@ var socket = null;
 console.log("username: " + username, "chatroom: " + chatroom);
 connectToChatRoom(username, chatroom);
 
+function getInput(title,callback) {
+    Swal.fire({
+        title: title,
+        input: 'text',
+        inputAttributes: {
+            autocapitalize: 'off'
+        },
+        showCancelButton: true,
+        confirmButtonText: 'Submit',
+        showLoaderOnConfirm: true,
+        preConfirm: (login) => {
+            // 可以在这里处理输入的数据，如发送到服务器
+            console.log("User's name: ", login);
+            return login; // 或者返回一个 promise
+        },
+        allowOutsideClick: () => !Swal.isLoading()
+    }).then((result) => {
+        if (result.isConfirmed) {
+            callback(result.value)
+        }
+    });
+}
+
 if (username == null || username == "") {
     while (username == null || username == "") {
-        username = prompt("Please enter your username: ");
+        username = getInput("请输入用户名: ",function (name) {
+            username = name
+        });
     }
 }
 
@@ -86,22 +111,24 @@ function initSocket() {
 }
 
 function createRoom() {
-    var roomName = prompt("Please enter the name of the room you want to create: ");
-    if (roomName == null || roomName == "") {
-        return;
-    }
-    fetch('/create_room?roomName=' + roomName)
-    .then(response => response.json())
-    .then(data => {
-        console.log(data);
-        if (data.errorCode == 0) {
-            showToast("Room created successfully");
-            chatroom = roomName;
-            initSocket();
-        } else {
-            showToast(data.message);
+    getInput("输入需要创建的聊天室名称",function (roomName) {
+        if (roomName == null || roomName == "") {
+            return;
         }
+        fetch('/create_room?roomName=' + roomName)
+        .then(response => response.json())
+        .then(data => {
+            console.log(data);
+            if (data.errorCode == 0) {
+                showToast("聊天室创建成功");
+                chatroom = roomName;
+                initSocket();
+            } else {
+                showToast(data.message);
+            }
+        });
     });
+
 }
 
 function connectToChatRoom() {
