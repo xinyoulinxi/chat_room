@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Login</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <style>
+        body,
+        html {
+            height: 100%;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            background: white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+
+        .input-group {
+            display: flex;
+            width: 100%;
+            /* Make sure the input group takes full width of the container */
+            margin: 10px 0;
+        }
+
+        .input-group label {
+            white-space: nowrap;
+            /* Prevents label from wrapping */
+            padding-right: 10px;
+            /* Spacing between label and input */
+            flex-shrink: 0;
+            /* Prevents label from shrinking */
+        }
+
+        input[type="text"] {
+            flex-grow: 1;
+            /* Allows input to take up the rest of the space in the input group */
+            padding: 10px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            font-size: 16px;
+            min-width: 320px;
+            min-height: 36px;
+            border-radius: 4px;
+        }
+
+        button {
+            font-size: 20px;
+            padding: 10px 20px;
+            color: white;
+            background-color: #007bff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        label {
+            font-size: 20px;
+            margin-bottom: 5px;
+            /* Space between label and input */
+            min-width: 120px;
+        }
+        .title {
+            margin-bottom: 20px;
+            color: gray;
+        }
+    </style>
+    <link rel="stylesheet" href="/pages/css/chat.css">
+</head>
+
+<body>
+    <div class="container">
+        <h1 class="title">SAME CHAT ROOM</h1>
+
+        <div class="input-group">
+            <input type="text" id="usernameInput" name="usernameInput" placeholder="输入用户名，并选择房间">
+        </div>
+        <div style="display: flex;">
+            <div id="roomList" class="roomList"></div>
+        </div>
+        <button onclick="connectToChatRoom()">登录</button>
+    </div>
+
+    <script>
+        var chatRoom = ""
+        initRoomList()
+        function initRoomList() {
+            // 访问服务器，通过room_list接口获取房间列表
+            fetch('/room_list')
+                .then(response => response.json())
+                .then(data => {
+                    // 更新房间列表
+                    var roomList = document.getElementById('roomList');
+                    roomList.innerHTML = '';
+                    // Create a select element
+                    var select = document.createElement('select');
+                    select.classList.add('select-text');
+                    console.log(data)
+                    if(data.length == 0) {
+                        alert("no room available")
+                        return
+                    }
+                    chatroom = data[0]
+                    select.onchange = function () {
+                        chatroom = this.value;
+                    };
+                    data.forEach(room => {
+                        // Create an option for each room
+                        var option = document.createElement('option');
+                        option.classList.add('select-text');
+                        option.value = room;
+                        option.textContent = room;
+                        // Add the option to the select element
+                        select.appendChild(option);
+                    });
+                    select.selectedIndex = 0
+                    // Add the select element to the room list
+                    roomList.appendChild(select);
+                })
+                .catch(error => console.error('Error:', error));
+        }
+        function connectToChatRoom() {
+            var username = document.getElementById('usernameInput').value;
+            if (username === '') {
+                alert('Please enter a username and room number');
+                return;
+            }
+            var url = '/chat_room?username=' + encodeURIComponent(username) + '&chatroom=' + encodeURIComponent(chatroom);
+            window.location.href = url;
+        }
+    </script>
+</body>
+
+</html>
