@@ -1,8 +1,9 @@
 .chat-container {
     display: flex;
+    flex: 1; /* 占用所有剩余空间 */
+    overflow: auto; /* 允许滚动 */
     width: 100%;
     /* 容器宽度为100% */
-    border: 1px solid #ccc;
     height: 640px;
 }
 .chatroom-container {
@@ -10,7 +11,6 @@
     /* 容器宽度为100% */
     width: 100%;
     background-color: gray;
-    border: 1px solid #ccc;
 }
 
 .chat-content {
@@ -25,7 +25,7 @@
     align-items: flex-start;
     flex-direction: column;
     overflow-y: auto;
-    height: 640px;
+    padding: 10px;
 }
 
 .message-bubble {
@@ -52,13 +52,21 @@
     background-color: #95EC69;
     align-self: flex-end;
 }
+.message-time-text{
+    color: gray;
+    font-size: 16px;
+    margin: 10px;
+    display: flex;
+    align-self: center;
 
+}
 .other-message {
     background-color: white;
     align-self: flex-start;
 }
 
 .file-upload {
+    display: flex;
     position: relative;
     overflow: hidden;
     flex-grow: 0;
@@ -89,9 +97,11 @@
     display: flex;
     /* 启用Flexbox布局 */
     align-items: center;
+    background-color: #F5F5F5;
     /* 垂直居中对齐 */
     width: 100%;
-    margin-top: 10px;
+    padding-top: 10px;
+    padding-bottom: 10px;
     /* 容器宽度为100% */
 }
 
@@ -101,6 +111,7 @@
     color: black;
     background-color: #bbb;
     border: none;
+    margin-left: 10px;
     border-radius: 6px;
     font-size: 24px;
 }
@@ -127,28 +138,11 @@
     font-size: 16px;
     font-weight: bold;
     min-width: 72px;
+    padding: 6px;
     height: 40px;
+    margin-right: 10px;
     background-color: #95EC69;
 }
-
-.modal {
-    display: none;
-    position: fixed;
-    z-index: 1;
-    padding-top: 100px;
-    width: 100%;
-    height: 100%;
-    overflow: auto;
-    background-color: rgba(0, 0, 0, 0.9);
-}
-
-.modal-content {
-    margin: auto;
-    display: block;
-    width: 80%;
-    max-width: 700px;
-}
-
 .close {
     position: absolute;
     top: 15px;
@@ -170,18 +164,17 @@
 .roomList {
     display: flex;
     flex-grow: 1;
-    align-items: left;
-    min-width: 320px;
+    min-width: 200px;
     min-height: 32px;
     font-size: 16px;
     margin-top: 10px;
     min-height: 36px;
+    margin-left: 10px;
     margin-bottom: 10px;
 }
 
 .create-room-btn {
     flex-grow: 0;
-    display: flex;
     color: black;
     font-weight: bold;
     border-radius: 6px;
@@ -189,6 +182,7 @@
     font-size: 16px;
     padding: 8px;
     min-height: 32px;
+    min-width: 72px;
     margin: 10px;
     background-color: #95EC69;
 }
@@ -212,7 +206,7 @@
     border: 1px solid #ccc;
     color: black;
     font-size: 16px;
-    min-width: 320px;
+    min-width: 240px;
 }
 
 .select-text-selected {
@@ -220,5 +214,5 @@
     border: 1px solid #ccc;
     color: green;
     font-size: 16px;
-    min-width: 320px;
+    min-width: 240px;
 }

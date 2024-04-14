@@ -16,6 +16,7 @@ type Message struct {
 	Content  string `json:"content"`
 	Image    string `json:"image,omitempty"` // Base64-encoded image data
 	SendTime string `json:"sendTime"`
+	RoomName string `json:"roomName,omitempty"`
 
 	ChatRoomList []string `json:"chatRoomList,omitempty"`
 }

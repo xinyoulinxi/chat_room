@@ -22,7 +22,6 @@ var chatRoomMap = make(map[string]*chat_type.ChatRoom)
 var chatRoomList = make([]string, 0)
 
 func getChatRoomByName(roomName string) *chat_type.ChatRoom {
-	fmt.Println("getChatRoomByName:", roomName, "chat room map length=", len(chatRoomMap))
 	if chatRoom, ok := chatRoomMap[roomName]; ok {
 		return chatRoom
 	} else {
@@ -85,7 +84,7 @@ func addNewUserToChatRoom(chatRoom *chat_type.ChatRoom, id string) {
 func sendMessage(message chat_type.Message, c *websocket.Conn) error {
 	// Convert Message struct to JSON
 	jsonMsg, err := json.Marshal([]chat_type.Message{message})
-	fmt.Println("jsonMsg:", string(jsonMsg))
+	fmt.Println("send msg:", string(jsonMsg))
 	if err != nil {
 		fmt.Println("Failed to convert message to JSON:", err)
 		return err
@@ -120,9 +119,7 @@ func CreateChatRoomHandler(w http.ResponseWriter, r *http.Request) {
 
 func ChatRoomHandler(w http.ResponseWriter, r *http.Request) {
 	chatRoomList = chat_db.LoadRoomNameListFromFile()
-	fmt.Println(chatRoomList)
 	// Upgrade HTTP connection to WebSocket
-	fmt.Println("chatRoomHandler new connection")
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		http.Error(w, "Failed to upgrade connection to WebSocket", http.StatusInternalServerError)
@@ -133,7 +130,7 @@ func ChatRoomHandler(w http.ResponseWriter, r *http.Request) {
 	// 获取request中的参数,比如id和chatroom
 	id := r.URL.Query().Get("id")
 	chatRoomName := r.URL.Query().Get("chatroom")
-	fmt.Println("new user join id:", id, "Room Name:", chatRoomName)
+	fmt.Println("new user join id:", id, ", Room Name:", chatRoomName)
 	// Get chat room by name
 	if chatRoomName == "" || chatRoomName == "null" {
 		chatRoomName = "default"
@@ -144,7 +141,8 @@ func ChatRoomHandler(w http.ResponseWriter, r *http.Request) {
 	addNewUserToChatRoom(chatRoom, id)
 	// Add connection to the list of active connections
 	chatRoom.Connections = append(chatRoom.Connections, conn)
-	sendMessage(chat_type.Message{Type: "roomList", ChatRoomList: chatRoomList}, conn)
+	fmt.Println("new connection current room user=", len(chatRoom.Connections))
+	sendMessage(chat_type.Message{Type: "roomList", ChatRoomList: chatRoomList, RoomName: chatRoomName}, conn)
 	sendChatRoomMessagesToNewUser(chatRoom, conn)
 	// Read messages from the WebSocket connection
 	for {
@@ -153,7 +151,7 @@ func ChatRoomHandler(w http.ResponseWriter, r *http.Request) {
 		if err != nil { // remove connection from the list of active connections
 			fmt.Println("Failed to connect :", err)
 			chatRoom.Connections = removeConnection(conn, chatRoom.Connections)
-			fmt.Println("chatRoom.Connections:", chatRoom.Connections)
+			fmt.Println(id, "Leave, chatRoom.Connections:", len(chatRoom.Connections))
 			if len(chatRoom.Connections) == 0 {
 				CloseChatRoom(chatRoom)
 			}

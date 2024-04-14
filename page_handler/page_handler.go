@@ -85,7 +85,7 @@ func StartWebServer() {
 
 	// Chat Room
 	mux.Handle("/chat_room", utils.NoCacheMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("login")
+		fmt.Println("chat_room")
 		http.ServeFile(w, r, "pages/chat_room.html")
 	})))
 

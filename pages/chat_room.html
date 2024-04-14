@@ -2,15 +2,27 @@
 
 <head>
     <title>Chat Room</title>
-    <meta name="viewport" content="width=device-width, initial-scale=0.8, maximum-scale=1 user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1 user-scalable=no">
     <style>
+        html,
+        body {
+            height: 100%;
+            /* 让html和body的高度占满整个视口的高度 */
+            margin: 0;
+            /* 移除默认的边距 */
+            padding: 0;
+            /* 移除默认的内边距 */
+            overflow: hidden;
+            /* 防止滚动 */
+        }
+
         .container {
             display: flex;
             flex-direction: column;
-            align-items: center;
-            background:  #F5F5F5;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            border-radius: 8px;
+            height: 100vh;
+            /* 视口高度 */
+            width: 100vw;
+            /* 视口宽度 */
         }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -23,9 +35,9 @@
     <link rel="stylesheet" href="/pages/css/chat.css">
 </head>
 
-<body >
+<body>
     <div class="container">
-        <div style="display: flex; background-color: #F5F5F5;width: 100%; align-items: center ">
+        <div style="display: flex; background-color: #F5F5F5; width: 100%; align-items: center;">
             <div id="roomList" class="roomList"></div>
             <button id="creatRoomBtn" class="create-room-btn" onclick="createRoom()">创建聊天室</button>
         </div>
@@ -42,7 +54,6 @@
             <input type="text" class="input-container" id="messageInput" placeholder="输入消息">
             <button onclick="sendMessage()" class="send-btn">发送(Enter)</button>
         </div>
-
     </div>
     <script src="/pages/js/chat.js"></script>
 </body>

@@ -19,7 +19,7 @@ func SaveRoomNameListToFile(chatRoomList []string) {
 		fmt.Println("Failed to write room list file:", err)
 		return
 	}
-	fmt.Println("Room list saved to file", string(jsonData))
+	fmt.Println("Room list saved to file")
 }
 
 func LoadRoomNameListFromFile() []string {
