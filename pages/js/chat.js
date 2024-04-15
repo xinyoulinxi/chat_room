@@ -94,11 +94,44 @@ function closeSocket() {
     }
 }
 
+function displayFileMessage(message) {
+    const messageDisplay = document.getElementById('messageDisplay');
+    const fileElement = document.createElement('a');
+    const downLoadElement = document.createElement('a');
+    // 让文件在新窗口打开
+    fileElement.target = "_blank";
+    // 点击downLoadElement下载文件
+    downLoadElement.download = message.content;
+    downLoadElement.href = message.file;
+    downLoadElement.textContent = "[下载]";
+    downLoadElement.classList.add('message-download');
+    fileElement.href = message.file; // Set src to the image field of the message
+    fileElement.textContent = message.content;
+    fileElement.classList.add('message-bubble');
+    fileElement.classList.add('message-bubble-text');
+    if (message.userId === username) {
+        downLoadElement.classList.add('message-download-me');
+        fileElement.classList.add('my-message');
+    } else {
+        downLoadElement.classList.add('message-download-other');
+        const userName = document.createElement('div');
+        userName.className = 'user-name';
+        userName.textContent = message.userId;
+        messageDisplay.appendChild(userName);
+        fileElement.classList.add('other-message');
+    }
+    messageDisplay.appendChild(fileElement);
+    messageDisplay.appendChild(downLoadElement);
+}
+
 function handleMessage(message) {
     insertSendTime(message)
     if (message.type == "image") {
         displayImageMessage(message);
-    } else if (message.type == "text" || message.type == "") {
+    }else if(message.type == "file"){
+        displayFileMessage(message);
+    }
+     else if (message.type == "text" || message.type == "") {
         displayNormalMessage(message);
     } else {
         handleRoomList(message)
@@ -158,6 +191,7 @@ function initSocket() {
     socket.onmessage = function (event) {
         var messages = JSON.parse(event.data); // Parse the JSON data into an array
         messages.forEach(function (message) { // Iterate over each message in the array
+            console.log(message)
             handleMessage(message);
         });
         // Scroll to the bottom of the message display
@@ -283,20 +317,34 @@ function showToast(text) {
 
 }
 
-function sendImage() {
-    const imageInput = document.getElementById('image-select');
-    const reader = new FileReader();
-    reader.onload = function (e) {
-        // Create a message object with username, content, and image
-        const messageObj = {
-            userId: username,
-            room: chatroom,
-            content: "",
-            image: e.target.result // Base64-encoded image data
+function sendFile() {
+    const fileInput = document.getElementById('image-select');
+    // 确保有文件被选中
+    if (fileInput.files.length > 0) {
+        const file = fileInput.files[0]; // 获取第一个文件
+        const fileName = file.name; // 获取文件名
+
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            // 限制文件大小
+            if (file.size > 1024 * 1024 * 20) {
+                showToast("文件大小不能超过20MB");
+                return;
+            }
+            // 创建一个包含用户名、内容、图片和文件名的消息对象
+            const messageObj = {
+                userId: username,
+                room: chatroom,
+                content: fileName,
+                image: e.target.result, // Base64-encoded image data
+            };
+            socket.send(JSON.stringify(messageObj));
+            showToast("文件发送成功");
+            fileInput.value = ''; // 重置文件输入以便下次使用
         };
-        socket.send(JSON.stringify(messageObj));
-        imageInput.value = '';
-    };
-    reader.readAsDataURL(imageInput.files[0]);
-    showToast("图片发送成功");
+        reader.readAsDataURL(file);
+    } else {
+        showToast("请选择一个文件");
+    }
 }
+

@@ -84,7 +84,7 @@ func addNewUserToChatRoom(chatRoom *chat_type.ChatRoom, id string) {
 func sendMessage(message chat_type.Message, c *websocket.Conn) error {
 	// Convert Message struct to JSON
 	jsonMsg, err := json.Marshal([]chat_type.Message{message})
-	fmt.Println("send msg:", string(jsonMsg))
+	//fmt.Println("send msg:", string(jsonMsg))
 	if err != nil {
 		fmt.Println("Failed to convert message to JSON:", err)
 		return err
@@ -160,13 +160,19 @@ func ChatRoomHandler(w http.ResponseWriter, r *http.Request) {
 		// Parse message into Message struct
 		var message chat_type.Message
 		err = json.Unmarshal(msg, &message)
+		// 限制message.Image的文件大小
+		if message.Image != "" {
+			if len(message.Image) > 1024*1024*20 {
+				message.Image = ""
+			}
+		}
 		if err != nil {
 			fmt.Println("Failed to parse message:", err)
 			continue
 		}
 		utils.TryTransferImagePathToMessage(&message)
 		message.SendTime = utils.GetCurTime()
-		fmt.Println("message:", message)
+		//fmt.Println("message:", message)
 		// Add message to the list of all messages
 		chatRoom.Messages = append(chatRoom.Messages, message)
 		chat_db.WriteChatInfoToLocalFile(chatRoom)

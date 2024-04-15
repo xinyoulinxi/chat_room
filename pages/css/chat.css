@@ -52,14 +52,31 @@
     background-color: #95EC69;
     align-self: flex-end;
 }
+
 .message-time-text{
     color: gray;
     font-size: 16px;
     margin: 10px;
     display: flex;
     align-self: center;
-
 }
+
+.message-download{
+    color: gray;
+    font-size: 16px;
+    margin-left: 10px;
+    margin-right: 10px;
+    display: flex;
+}
+
+.message-download-me{
+    align-self: flex-end;
+}
+
+.message-download-other{
+    align-self: flex-start;
+}
+
 .other-message {
     background-color: white;
     align-self: flex-start;

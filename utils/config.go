@@ -7,6 +7,7 @@ import (
 
 const DataPath = "data/"
 const ChatRoomPath = "data/chatroom/"
+const FileDir = "data/files/"
 const ImageDir = "data/images/"
 const RoomListPath = "data/room_list.json"
 
@@ -34,6 +35,7 @@ func GetLocalIP() string {
 }
 func EnsureDirEnv() {
 	EnsureDir(DataPath)
+	EnsureDir(FileDir)
 	EnsureDir(ImageDir)
 	EnsureDir(ChatRoomPath)
 	EnsureFileExist(RoomListPath)

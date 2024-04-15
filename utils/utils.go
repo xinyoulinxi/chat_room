@@ -1,9 +1,7 @@
 package utils
 
 import (
-	"crypto/md5"
 	"encoding/base64"
-	"encoding/hex"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -12,6 +10,8 @@ import (
 	"strings"
 	"time"
 	chat_type "web_server/type"
+
+	"github.com/h2non/filetype"
 )
 
 func GetChatRoomFilePath(chatName string) string {
@@ -25,41 +25,74 @@ func GetCurTime() string {
 	return time.Now().Format("2006-01-02 15:04:05")
 }
 
-func TryTransferImagePathToMessage(message *chat_type.Message) error {
+// saveFile 根据Base64编码的数据和推断的文件类型保存文件
+func saveFile(message *chat_type.Message) error {
+	fmt.Println("saveFile")
+
+	fragments := strings.Split(message.Image, ",")
+	base64Data := fragments[1]
+	name := message.Content
+	// 解码Base64字符串
+	data, err := base64.StdEncoding.DecodeString(base64Data)
+	if err != nil {
+		fmt.Println("Failed to decode base64 data:", err)
+		return err
+	}
+
+	// 推断文件类型
+	kind, err := filetype.Match(data)
+	if err != nil {
+		fmt.Println("Failed to infer file type:", err)
+		return err
+	}
+
+	// 获取对应的文件扩展名
+	ext := kind.Extension
+
+	// 判断文件类型，如果是图片类型，则给message.Type赋值为image
+	fmt.Println("kind.MIME.Type", kind.MIME.Type)
+	filename := ""
+	if kind.MIME.Type == "image" {
+		filename = ImageDir + name
+		message.Type = "image"
+		message.Image = filename
+	} else {
+		filename = FileDir + name
+		message.Type = "file"
+		message.File = filename
+	}
+	if ext == "" {
+		ext = "bin" // 使用通用二进制扩展名作为后备
+	}
+
+	// 保存文件
+	err = ioutil.WriteFile(filename, data, 0666)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func TryTransferImagePathToMessage(message *chat_type.Message) {
+	fmt.Println("TryTransferImagePathToMessage")
 	if message.Image != "" {
 		message.Type = "image"
 		fmt.Println("start to decode image data")
 		fragments := strings.Split(message.Image, ",")
 		if len(fragments) > 1 {
-			b64data := fragments[1]
-			imageData, err := base64.StdEncoding.DecodeString(b64data)
-			if err != nil {
-				fmt.Println("Failed to decode image data:", err)
-				return err
-			}
-			hasher := md5.New()
-			hasher.Write(imageData)
-			imageFileName := hex.EncodeToString(hasher.Sum(nil)) + ".jpg"
-			err = ioutil.WriteFile(ImageDir+imageFileName, imageData, 0644)
-			if err != nil {
-				fmt.Println("Failed to write image file:", err)
-				return err
-			}
-			message.Image = ImageDir + imageFileName
-			fmt.Println("Image saved to:", message.Image)
+			saveFile(message)
 		} else {
 			u, err := url.Parse(fragments[0])
 			if err != nil {
 				fmt.Println("Failed to parse image url:", err)
-				return err
+				return
 			}
 			message.Image = u.String()
-			fmt.Println("Image url from:", message.Image)
 		}
 	} else {
 		message.Type = "text"
 	}
-	return nil
 }
 
 // noCacheMiddleware 为响应添加缓存控制头

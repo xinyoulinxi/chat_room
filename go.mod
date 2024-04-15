@@ -5,6 +5,7 @@ go 1.22
 require (
 	github.com/gorilla/handlers v1.5.2
 	github.com/gorilla/websocket v1.5.1
+	github.com/h2non/filetype v1.1.3
 )
 
 require (
