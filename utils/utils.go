@@ -28,22 +28,33 @@ func TryTransferImagePathToMessage(message *chat_type.Message) error {
 	if message.Image != "" {
 		message.Type = "image"
 		fmt.Println("start to decode image data")
-		b64data := strings.Split(message.Image, ",")[1]
-		imageData, err := base64.StdEncoding.DecodeString(b64data)
-		if err != nil {
-			fmt.Println("Failed to decode image data:", err)
-			return err
+		fragments := strings.Split(message.Image, ",")
+		if len(fragments) > 1 {
+			b64data := fragments[1]
+			imageData, err := base64.StdEncoding.DecodeString(b64data)
+			if err != nil {
+				fmt.Println("Failed to decode image data:", err)
+				return err
+			}
+			hasher := md5.New()
+			hasher.Write(imageData)
+			imageFileName := hex.EncodeToString(hasher.Sum(nil)) + ".jpg"
+			err = ioutil.WriteFile(ImageDir+imageFileName, imageData, 0644)
+			if err != nil {
+				fmt.Println("Failed to write image file:", err)
+				return err
+			}
+			message.Image = ImageDir + imageFileName
+			fmt.Println("Image saved to:", message.Image)
+		} else {
+			u, err := url.Parse(fragments[0])
+			if err != nil {
+				fmt.Println("Failed to parse image url:", err)
+				return err
+			}
+			message.Image = ImageDir + u.String()
+			fmt.Println("Image url from:", message.Image)
 		}
-		hasher := md5.New()
-		hasher.Write(imageData)
-		imageFileName := hex.EncodeToString(hasher.Sum(nil)) + ".jpg"
-		err = ioutil.WriteFile(ImageDir+imageFileName, imageData, 0644)
-		if err != nil {
-			fmt.Println("Failed to write image file:", err)
-			return err
-		}
-		message.Image = ImageDir + imageFileName
-		fmt.Println("Image saved to:", message.Image)
 	} else {
 		message.Type = "text"
 	}
