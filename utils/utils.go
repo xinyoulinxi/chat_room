@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 	"time"
@@ -52,7 +53,7 @@ func TryTransferImagePathToMessage(message *chat_type.Message) error {
 				fmt.Println("Failed to parse image url:", err)
 				return err
 			}
-			message.Image = ImageDir + u.String()
+			message.Image = u.String()
 			fmt.Println("Image url from:", message.Image)
 		}
 	} else {
