@@ -1,6 +1,6 @@
 module web_server
 
-go 1.23
+go 1.22.2
 
 require (
 	github.com/gorilla/handlers v1.5.2

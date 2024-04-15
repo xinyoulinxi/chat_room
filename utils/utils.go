@@ -82,3 +82,15 @@ func EnsureDir(dirName string) error {
 	}
 	return nil
 }
+
+func EnsureFileExist(filePath string) error {
+	_, err := os.Stat(filePath)
+	if os.IsNotExist(err) {
+		errFile :=
+			ioutil.WriteFile(filePath, []byte{}, 0644)
+		if errFile != nil {
+			return errFile
+		}
+	}
+	return nil
+}

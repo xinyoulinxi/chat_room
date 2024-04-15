@@ -24,15 +24,15 @@ func SaveRoomNameListToFile(chatRoomList []string) {
 
 func LoadRoomNameListFromFile() []string {
 	data, err := ioutil.ReadFile(utils.RoomListPath)
+	var roomList []string
 	if err != nil {
 		fmt.Println("Failed to read room list file:", err)
-		return nil
+		return roomList
 	}
-	var roomList []string
 	err = json.Unmarshal(data, &roomList)
 	if err != nil {
 		fmt.Println("Failed to unmarshal room list:", err)
-		return nil
+		return roomList
 	}
 	return roomList
 }

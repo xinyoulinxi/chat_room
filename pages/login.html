@@ -111,9 +111,7 @@
                     // Create a select element
                     var select = document.createElement('select');
                     select.classList.add('select-text');
-                    console.log(data)
-                    if(data.length == 0) {
-                        alert("no room available")
+                    if(data == null || data.length == 0) {
                         return
                     }
                     chatroom = data[0]
@@ -141,7 +139,10 @@
                 alert('Please enter a username and room number');
                 return;
             }
-            var url = '/chat_room?username=' + encodeURIComponent(username) + '&chatroom=' + encodeURIComponent(chatroom);
+            if(chatRoom == null || chatRoom == ""){
+                chatRoom = "default"
+            }
+            var url = '/chat_room?username=' + encodeURIComponent(username) + '&chatroom=' + encodeURIComponent(chatRoom);
             window.location.href = url;
         }
     </script>

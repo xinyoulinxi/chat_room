@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 )
 
+const DataPath = "data/"
 const ChatRoomPath = "data/chatroom/"
 const ImageDir = "data/images/"
 const RoomListPath = "data/room_list.json"
@@ -31,8 +32,13 @@ func GetLocalIP() string {
 
 	return config.IP
 }
+func EnsureDirEnv() {
+	EnsureDir(DataPath)
+	EnsureDir(ImageDir)
+	EnsureDir(ChatRoomPath)
+	EnsureFileExist(RoomListPath)
 
+}
 func InitEnv() {
-	EnsureDir("data")
-	EnsureDir("data/images")
+	EnsureDirEnv()
 }

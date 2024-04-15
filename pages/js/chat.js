@@ -5,7 +5,6 @@ var username = params.get("username")
 var chatroom = params.get("chatroom")
 var socket = null;
 
-console.log("username: " + username, "chatroom: " + chatroom);
 if (username == null || username == "") {
     username = getInput("请输入用户名: ",false, function (name) {
         username = name
@@ -38,7 +37,6 @@ function getInput(title,showCancelButton, callback) {
         showLoaderOnConfirm: true,
         preConfirm: (login) => {
             // 可以在这里处理输入的数据，如发送到服务器
-            console.log("User's name: ", login);
             if (login == null || login == "") {
                 showToast("用户名不能为空，请重新输入");
                 return false;
@@ -109,7 +107,6 @@ function handleMessage(message) {
 
 function getOkTimeText(currentDate, time) {
     if (currentDate.getDate() == new Date(time).getDate()) {
-        console.log("today")
         return time.substring(11, 16);
     }
     // 昨天显示昨天加时间
@@ -128,12 +125,9 @@ function getTimeInterval(time) {
     }
     var lastDate = new Date(lastTime);
     var interval = currentDate - lastDate;
-    console.log("interval: " + interval + " currentDate: " + currentDate + " lastDate: " + lastDate + " lastTime：" + lastTime + " time: " + time)
     if (interval > 1000 * 60 * 5) {
-        console.log(" in interval: " + interval + " currentDate: " + currentDate + " lastDate: " + lastDate + " lastTime：" + lastTime + " time: " + time)
         lastTime = time;
         // 如果是今天的消息，不显示年月日，只显示时分
-        console.log("currentDate.getDate(): " + currentDate.getDate() + " new Date(time).getDate(): " + new Date(time).getDate())
         return getOkTimeText(currentDate, time);
     }
 
@@ -162,7 +156,6 @@ function initSocket() {
     socket = new WebSocket('ws://' + window.location.host + '/ws?id=' + username + '&chatroom=' + chatroom);
     // Event listener for receiving messages from the server
     socket.onmessage = function (event) {
-        console.log(event.data);
         var messages = JSON.parse(event.data); // Parse the JSON data into an array
         messages.forEach(function (message) { // Iterate over each message in the array
             handleMessage(message);
@@ -171,7 +164,6 @@ function initSocket() {
         messageDisplay.scrollTop = messageDisplay.scrollHeight;
     };
     socket.onopen = function (event) {
-        console.log('WebSocket is connected.');
     };
 }
 
@@ -183,7 +175,6 @@ function createRoom() {
         fetch('/create_room?roomName=' + roomName)
             .then(response => response.json())
             .then(data => {
-                console.log(data);
                 if (data.errorCode == 0) {
                     showToast("聊天室创建成功");
                     chatroom = roomName;
@@ -224,8 +215,6 @@ function sendMessage() {
         content: message,
         image: null
     };
-
-    console.log(messageObj);
     // Send the message to the server
     socket.send(JSON.stringify(messageObj));
 
