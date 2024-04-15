@@ -103,7 +103,7 @@ func StartWebServer() {
 	fmt.Printf("Starting server at http://%s\n", url+":8080/")
 	fmt.Printf("Starting server at http://%s\n", url+":8080/page_1")
 	fmt.Printf("Starting server at http://%s\n", url+":8080/login")
-	err := http.ListenAndServe(url+":8080", handlers.CORS(headersOk, originsOk, methodsOk)(mux))
+	err := http.ListenAndServe(url+":80", handlers.CORS(headersOk, originsOk, methodsOk)(mux))
 	if err != nil {
 		log.Fatalf("Failed to start server: %v", err)
 	}
