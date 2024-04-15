@@ -100,9 +100,9 @@ func StartWebServer() {
 	// ws
 	mux.HandleFunc("/ws", chat_room.ChatRoomHandler)
 
-	fmt.Printf("Starting server at http://%s\n", url+":8080/")
-	fmt.Printf("Starting server at http://%s\n", url+":8080/page_1")
-	fmt.Printf("Starting server at http://%s\n", url+":8080/login")
+	fmt.Printf("Starting server at http://%s\n", url)
+	fmt.Printf("Starting server at http://%s\n", url+"/page_1")
+	fmt.Printf("Starting server at http://%s\n", url+"/login")
 	err := http.ListenAndServe(url+":80", handlers.CORS(headersOk, originsOk, methodsOk)(mux))
 	if err != nil {
 		log.Fatalf("Failed to start server: %v", err)
