@@ -3,7 +3,8 @@
 ```
 首先在根目录添加config.json文件，添加ip地址
 {
-   "ipAddress": 0.0.0.0"
+   "ipAddress": 0.0.0.0",
+   "port":80
 }
 ```
 然后执行
