@@ -9,6 +9,7 @@ require (
 )
 
 require (
+	github.com/bwmarrin/snowflake v0.3.0 // indirect
 	github.com/felixge/httpsnoop v1.0.3 // indirect
 	golang.org/x/net v0.17.0 // indirect
 )

@@ -11,6 +11,7 @@ type ChatRoom struct {
 
 type Message struct {
 	// MessageType string `json:"type"`
+	MsgID    string `json:"id"`
 	Type     string `json:"type"` // text  image  roomList file
 	UserID   string `json:"userId"`
 	Content  string `json:"content"`

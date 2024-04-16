@@ -2,15 +2,16 @@ package chat_room
 
 import (
 	"encoding/json"
+	"github.com/gorilla/websocket"
 	"log/slog"
 	"net/http"
 	chat_db "web_server/db"
 	chat_type "web_server/type"
-	utils "web_server/utils"
-
-	"github.com/gorilla/websocket"
+	"web_server/utils"
 	// "github.com/gorilla/handlers"
 )
+
+const maxHistoryCount = 100
 
 var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool {
@@ -44,7 +45,14 @@ func getChatRoomByName(roomName string) *chat_type.ChatRoom {
 
 func sendChatRoomMessagesToNewUser(chatRoom *chat_type.ChatRoom, conn *websocket.Conn) {
 	// Send all messages to the newly connected user
-	jsonMsg, err := json.Marshal(chatRoom.Messages)
+	var messages []chat_type.Message
+	if len(chatRoom.Messages) > maxHistoryCount {
+		// 保留最新100条
+		messages = chatRoom.Messages[len(chatRoom.Messages)-maxHistoryCount:]
+	} else {
+		messages = chatRoom.Messages
+	}
+	jsonMsg, err := json.Marshal(messages)
 	if err != nil {
 		slog.Error("Failed to convert message to JSON", "error", err)
 		return
@@ -82,7 +90,7 @@ func addNewUserToChatRoom(chatRoom *chat_type.ChatRoom, id string) {
 func sendMessage(message chat_type.Message, c *websocket.Conn) error {
 	// Convert Message struct to JSON
 	jsonMsg, err := json.Marshal([]chat_type.Message{message})
-	slog.Info("send msg:", string(jsonMsg))
+	slog.Info("send", "msg", string(jsonMsg))
 	if err != nil {
 		slog.Error("Failed to convert message to JSON", "error", err)
 		return err
@@ -123,7 +131,6 @@ func ChatRoomHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to upgrade connection to WebSocket", http.StatusInternalServerError)
 		return
 	}
-	defer conn.Close()
 
 	// 获取request中的参数,比如id和chatroom
 	id := r.URL.Query().Get("id")
@@ -133,6 +140,12 @@ func ChatRoomHandler(w http.ResponseWriter, r *http.Request) {
 	if chatRoomName == "" || chatRoomName == "null" {
 		chatRoomName = "default"
 	}
+
+	go handleClientConn(conn, id, chatRoomName)
+}
+
+func handleClientConn(conn *websocket.Conn, id, chatRoomName string) {
+	defer conn.Close()
 	chatRoom := getChatRoomByName(chatRoomName)
 	chat_db.SaveRoomNameListToFile(chatRoomList)
 	// Add user to chat room
@@ -158,19 +171,20 @@ func ChatRoomHandler(w http.ResponseWriter, r *http.Request) {
 		// Parse message into Message struct
 		var message chat_type.Message
 		err = json.Unmarshal(msg, &message)
+		if err != nil {
+			slog.Error("Failed to parse message", "error", err)
+			continue
+		}
 		// 限制message.Image的文件大小
 		if message.Image != "" {
 			if len(message.Image) > 1024*1024*20 {
 				message.Image = ""
 			}
 		}
-		if err != nil {
-			slog.Error("Failed to parse message", "error", err)
-			continue
-		}
 		utils.TryTransferImagePathToMessage(&message)
+		message.MsgID = utils.GenerateId()
 		message.SendTime = utils.GetCurTime()
-		//fmt.Println("message:", message)
+		// fmt.Println("message:", message)
 		// Add message to the list of all messages
 		chatRoom.Messages = append(chatRoom.Messages, message)
 		chat_db.WriteChatInfoToLocalFile(chatRoom)

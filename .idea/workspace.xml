@@ -4,11 +4,14 @@
     <option name="autoReloadType" value="ALL" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="2761bd0f-1058-4186-8ce8-65e9c486cc3d" name="更改" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/GitCommitMessageStorage.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/chat_room.iml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+    <list default="true" id="2761bd0f-1058-4186-8ce8-65e9c486cc3d" name="更改" comment="添加idea项目配置文件">
+      <change afterPath="$PROJECT_DIR$/utils/snowflake.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/GitCommitMessageStorage.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/GitCommitMessageStorage.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/chat_room/chat_room.go" beforeDir="false" afterPath="$PROJECT_DIR$/chat_room/chat_room.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/go.mod" beforeDir="false" afterPath="$PROJECT_DIR$/go.mod" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/go.sum" beforeDir="false" afterPath="$PROJECT_DIR$/go.sum" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/type/chat_type.go" beforeDir="false" afterPath="$PROJECT_DIR$/type/chat_type.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -69,19 +72,10 @@
     "node.js.detected.package.eslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
     "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "preferences.keymap"
+    "settings.editor.selected.configurable": "preferences.pluginManager"
   }
 }]]></component>
-  <component name="RunManager" selected="Go 构建.go build web_server">
-    <configuration name="go build chat_room" type="GoApplicationRunConfiguration" factoryName="Go Application" temporary="true" nameIsGenerated="true">
-      <module name="chat_room" />
-      <working_directory value="$PROJECT_DIR$" />
-      <kind value="PACKAGE" />
-      <package value="chat_room" />
-      <directory value="$PROJECT_DIR$" />
-      <filePath value="$PROJECT_DIR$/main.go" />
-      <method v="2" />
-    </configuration>
+  <component name="RunManager">
     <configuration name="go build web_server" type="GoApplicationRunConfiguration" factoryName="Go Application" temporary="true" nameIsGenerated="true">
       <module name="chat_room" />
       <working_directory value="$PROJECT_DIR$" />
@@ -94,7 +88,6 @@
     <recent_temporary>
       <list>
         <item itemvalue="Go 构建.go build web_server" />
-        <item itemvalue="Go 构建.go build chat_room" />
       </list>
     </recent_temporary>
   </component>
@@ -124,7 +117,8 @@
   <component name="VcsManagerConfiguration">
     <MESSAGE value="fix: 修复图片链接消息错误" />
     <MESSAGE value="perf: Using the slog Package for Logging" />
-    <option name="LAST_COMMIT_MESSAGE" value="perf: Using the slog Package for Logging" />
+    <MESSAGE value="添加idea项目配置文件" />
+    <option name="LAST_COMMIT_MESSAGE" value="添加idea项目配置文件" />
   </component>
   <component name="VgoProject">
     <settings-migrated>true</settings-migrated>
