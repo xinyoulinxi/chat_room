@@ -13,6 +13,7 @@ const (
 	FileDir      = "data/files/"
 	ImageDir     = "data/images/"
 	RoomListPath = "data/room_list.json"
+	UserListPath = "data/user.json"
 	defaultPort  = "80"
 )
 
@@ -57,7 +58,11 @@ func InitEnv() {
 			panic(err)
 		}
 	}
-	if err := EnsureFileExist(RoomListPath); err != nil {
-		panic(err)
+	files := []string{RoomListPath, UserListPath}
+	for _, file := range files {
+		if err := EnsureFileExist(file); err != nil {
+			panic(err)
+		}
 	}
+
 }

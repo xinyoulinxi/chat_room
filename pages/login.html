@@ -82,6 +82,13 @@
         }
     </style>
     <link rel="stylesheet" href="/pages/css/chat.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.css" />
+    <script src="https://cdn.bootcdn.net/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
 </head>
 
 <body>
@@ -89,63 +96,18 @@
         <h1 class="title">SAME CHAT ROOM</h1>
 
         <div class="input-group">
-            <input type="text" id="usernameInput" name="usernameInput" placeholder="输入用户名，并选择房间">
+            <input type="text" id="usernameInput" name="usernameInput" placeholder="用户名">
+        </div>
+        <div class="input-group">
+            <input type="text" id="passwordInput" name="userPasswordInput" placeholder="密码">
         </div>
         <div style="display: flex;">
             <div id="roomList" class="roomList"></div>
         </div>
-        <button onclick="connectToChatRoom()">登录</button>
+        <button onclick="login()">登录</button>
+        <button onclick="register()">注册并登录</button>
     </div>
-
-    <script>
-        var chatRoom = ""
-        initRoomList()
-        function initRoomList() {
-            // 访问服务器，通过room_list接口获取房间列表
-            fetch('/room_list')
-                .then(response => response.json())
-                .then(data => {
-                    // 更新房间列表
-                    var roomList = document.getElementById('roomList');
-                    roomList.innerHTML = '';
-                    // Create a select element
-                    var select = document.createElement('select');
-                    select.classList.add('select-text');
-                    if(data == null || data.length == 0) {
-                        return
-                    }
-                    chatRoom = data[0]
-                    select.onchange = function () {
-                        chatRoom = this.value;
-                    };
-                    data.forEach(room => {
-                        // Create an option for each room
-                        var option = document.createElement('option');
-                        option.classList.add('select-text');
-                        option.value = room;
-                        option.textContent = room;
-                        // Add the option to the select element
-                        select.appendChild(option);
-                    });
-                    select.selectedIndex = 0
-                    // Add the select element to the room list
-                    roomList.appendChild(select);
-                })
-                .catch(error => console.error('Error:', error));
-        }
-        function connectToChatRoom() {
-            var username = document.getElementById('usernameInput').value;
-            if (username === '') {
-                alert('Please enter a username and room number');
-                return;
-            }
-            if(chatRoom == null || chatRoom == ""){
-                chatRoom = "default"
-            }
-            var url = '/chat_room?username=' + encodeURIComponent(username) + '&chatroom=' + encodeURIComponent(chatRoom);
-            window.location.href = url;
-        }
-    </script>
+    <script src="/pages/js/login.js"></script>
 </body>
 
 </html>

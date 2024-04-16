@@ -77,3 +77,34 @@ func WriteChatInfoToLocalFile(chatRoom *chat_type.ChatRoom) error {
 	slog.Info("Message saved to file")
 	return nil
 }
+
+func WriteUsersToLocalFile(user []chat_type.User) error {
+	// Save messages to a file
+	jsonData, err := json.Marshal(user)
+	if err != nil {
+		slog.Error("Failed to marshal user", "error", err)
+		return err
+	}
+	err = os.WriteFile(utils.UserListPath, jsonData, 0644)
+	if err != nil {
+		slog.Error("Failed to write user file", "error", err)
+		return err
+	}
+	slog.Info("User saved to file")
+	return nil
+}
+
+func LoadUsersFromLocalFile() []chat_type.User {
+	data, err := os.ReadFile(utils.UserListPath)
+	var users []chat_type.User
+	if err != nil {
+		slog.Error("Failed to read user file", "error", err)
+		return users
+	}
+	err = json.Unmarshal(data, &users)
+	if err != nil {
+		slog.Error("Failed to unmarshal user", "error", err)
+		return users
+	}
+	return users
+}

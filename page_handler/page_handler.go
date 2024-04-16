@@ -8,6 +8,7 @@ import (
 	"os"
 	"strconv"
 	chat_room "web_server/chat_room"
+	"web_server/user"
 	utils "web_server/utils"
 
 	"github.com/gorilla/handlers"
@@ -77,12 +78,16 @@ func StartWebServer() {
 	mux.Handle("/page_1", utils.NoCacheMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "pages/page_1.html")
 	})))
-
 	// login
 	mux.Handle("/login", utils.NoCacheMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		slog.Info("route page to login")
 		http.ServeFile(w, r, "pages/login.html")
 	})))
+	// login
+	mux.HandleFunc("/login_user", user.LoginHandler)
+
+	// register
+	mux.HandleFunc("/register_user", user.RegisterHandler)
 
 	// Chat Room
 	mux.Handle("/chat_room", utils.NoCacheMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

@@ -1,16 +1,10 @@
 
 // Establish a WebSocket connection
 var params = new URLSearchParams(window.location.search);
-var username = params.get("username")
-var chatroom = params.get("chatroom")
+var userId = params.get("userid")
+var userName = params.get("username")
+var chatRoom = params.get("chatroom")
 var socket = null;
-
-if (username == null || username == "") {
-    username = getInput("请输入用户名: ",false, function (name) {
-        username = name
-        init()
-    });
-}
 
 init()
 function init() {
@@ -20,7 +14,7 @@ function init() {
             sendMessage();
         }
     });
-    connectToChatRoom(username, chatroom);
+    connectToChatRoom();
 }
 
 function getInput(title,showCancelButton, callback) {
@@ -62,11 +56,11 @@ function handleRoomList(message) {
 
     select.classList.add('select-text-selected');
     select.onchange = function () {
-        chatroom = this.value;
+        chatRoom = this.value;
         initSocket();
     };
-    if (chatroom == null || chatroom == "") {
-        chatroom = message.chatRoomList[0];
+    if (chatRoom == null || chatRoom == "") {
+        chatRoom = message.chatRoomList[0];
     }
 
     // 将select设置为当前chatroom的值
@@ -79,11 +73,11 @@ function handleRoomList(message) {
         option.textContent = room;
         // Add the option to the select element
         select.appendChild(option);
-        if (chatroom == room) {
+        if (chatRoom == room) {
             option.classList.add("select-text-selected")
         }
     }
-    select.selectedIndex = message.chatRoomList.indexOf(chatroom);
+    select.selectedIndex = message.chatRoomList.indexOf(chatRoom);
     // Add the select element to the room list
     roomList.appendChild(select);
 }
@@ -109,14 +103,14 @@ function displayFileMessage(message) {
     fileElement.textContent = message.content;
     fileElement.classList.add('message-bubble');
     fileElement.classList.add('message-bubble-text');
-    if (message.userId === username) {
+    if (message.userName === userName || message.userId === userId) {
         downLoadElement.classList.add('message-download-me');
         fileElement.classList.add('my-message');
     } else {
         downLoadElement.classList.add('message-download-other');
         const userName = document.createElement('div');
         userName.className = 'user-name';
-        userName.textContent = message.userId;
+        userName.textContent = message.userName;
         messageDisplay.appendChild(userName);
         fileElement.classList.add('other-message');
     }
@@ -126,12 +120,12 @@ function displayFileMessage(message) {
 
 function handleMessage(message) {
     insertSendTime(message)
-    if (message.type == "image") {
+    if (message.type === "image") {
         displayImageMessage(message);
-    }else if(message.type == "file"){
+    }else if(message.type === "file"){
         displayFileMessage(message);
     }
-     else if (message.type == "text" || message.type == "") {
+     else if (message.type === "text" || message.type === "") {
         displayNormalMessage(message);
     } else {
         handleRoomList(message)
@@ -139,11 +133,11 @@ function handleMessage(message) {
 }
 
 function getOkTimeText(currentDate, time) {
-    if (currentDate.getDate() == new Date(time).getDate()) {
+    if (currentDate.getDate() === new Date(time).getDate()) {
         return time.substring(11, 16);
     }
     // 昨天显示昨天加时间
-    if (currentDate.getDate() == new Date().getDate() - 1) {
+    if (currentDate.getDate() === new Date().getDate() - 1) {
         return "昨天 " + time.substring(11, 16);
     }
     return time.substring(0, 16);
@@ -152,7 +146,7 @@ var lastTime = ""; // "2024-11-12 00:00:00"
 // 判断当前的time是否需要显示时间，如果需要则返回time，否则返回""，并更新lastTime
 function getTimeInterval(time) {
     var currentDate = new Date();
-    if (lastTime == "" || lastTime.search("年") != -1) {
+    if (lastTime === "" || lastTime.search("年") !== -1) {
         lastTime = time;
         return getOkTimeText(currentDate, time)
     }
@@ -171,7 +165,7 @@ function getTimeInterval(time) {
 
 function insertSendTime(message) {
     const time = getTimeInterval(message.sendTime);
-    if (time == "") {
+    if (time === "") {
         return;
     }
     const messageDisplay = document.getElementById('messageDisplay');
@@ -186,7 +180,7 @@ function insertSendTime(message) {
 function initSocket() {
     closeSocket();
     lastTime = ""
-    socket = new WebSocket('ws://' + window.location.host + '/ws?id=' + username + '&chatroom=' + chatroom);
+    socket = new WebSocket('ws://' + window.location.host + '/ws?id=' + userId + '&chatroom=' + chatRoom);
     // Event listener for receiving messages from the server
     socket.onmessage = function (event) {
         var messages = JSON.parse(event.data); // Parse the JSON data into an array
@@ -206,12 +200,12 @@ function createRoom() {
         if (roomName == null || roomName == "") {
             return;
         }
-        fetch('/create_room?roomName=' + roomName)
+        fetch('/create_room?id='+userId+'&roomName=' + roomName)
             .then(response => response.json())
             .then(data => {
-                if (data.errorCode == 0) {
+                if (data.errorCode === 0) {
                     showToast("聊天室创建成功");
-                    chatroom = roomName;
+                    chatRoom = roomName;
                     initSocket();
                 } else {
                     showToast(data.message);
@@ -220,11 +214,14 @@ function createRoom() {
     });
 
 }
-
+function goLoginPage(){
+    window.location.href = "/login";
+}
 function connectToChatRoom() {
-    // Check if the username or room number is empty
-    if (username == null || username == "") {
-        showToast('请输入用户名');
+    // Check if the userId or room number is empty
+    if (userId == null || userId === "") {
+        showToast('请登录后再进入聊天室');
+        // goLoginPage()
         return;
     }
 
@@ -245,7 +242,8 @@ function sendMessage() {
     }
     // Create a message object with username and content
     const messageObj = {
-        userId: username,
+        userName: userName,
+        userId: userId,
         content: message,
         image: null
     };
@@ -262,12 +260,12 @@ function displayImageMessage(message) {
     imageElement.src = message.image; // Set src to the image field of the message
     imageElement.classList.add('message-bubble');
     imageElement.classList.add('message-bubble-img');
-    if (message.userId === username) {
+    if (message.userId === userId || message.userName === userName) {
         imageElement.classList.add('my-message');
     } else {
         const userName = document.createElement('div');
         userName.className = 'user-name';
-        userName.textContent = message.userId;
+        userName.textContent = message.userName;
         messageDisplay.appendChild(userName);
         imageElement.classList.add('other-message');
     }
@@ -289,13 +287,13 @@ function displayNormalMessage(message) {
     const messageElement = document.createElement('div');
     messageElement.textContent = message.content; // Add username before message
     messageElement.classList.add('message-bubble');
-    if (message.userId === username) {
+    if (message.userId === userId || message.userName === userName) {
         messageElement.classList.add('my-message');
         messageElement.align = "right"
     } else {
         const userName = document.createElement('div');
         userName.className = 'user-name';
-        userName.textContent = message.userId;
+        userName.textContent = message.userName;
         userName.align = "left"
         messageDisplay.appendChild(userName);
         messageElement.classList.add('other-message');
@@ -314,7 +312,6 @@ function showToast(text) {
         className: "chat-toast", // 自定义类名，用于添加特定的样式
         onClick: function () { } // 点击 Toast 时执行的函数
     }).showToast();
-
 }
 
 function sendFile() {
@@ -333,7 +330,7 @@ function sendFile() {
             }
             // 创建一个包含用户名、内容、图片和文件名的消息对象
             const messageObj = {
-                userId: username,
+                userId: userId,
                 room: chatroom,
                 content: fileName,
                 image: e.target.result, // Base64-encoded image data

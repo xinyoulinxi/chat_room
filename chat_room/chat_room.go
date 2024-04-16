@@ -7,6 +7,7 @@ import (
 	"net/http"
 	chat_db "web_server/db"
 	chat_type "web_server/type"
+	"web_server/user"
 	"web_server/utils"
 	// "github.com/gorilla/handlers"
 )
@@ -103,16 +104,24 @@ func sendMessage(message chat_type.Message, c *websocket.Conn) error {
 
 func CreateChatRoomHandler(w http.ResponseWriter, r *http.Request) {
 	// Parse request parameters
+	userId := r.URL.Query().Get("id")
 	roomName := r.URL.Query().Get("roomName")
 	slog.Info("CreateChatRoomHandler", "roomName", roomName)
-	if roomName == "" {
-		w.Write(chat_type.GetReturnMessageJson(1, "Invalid chat room name"))
+	if userId == "" {
+		utils.WriteResponse(w, 1, "Invalid user id")
 		return
 	}
-
+	if user.UserExist(userId) == false {
+		utils.WriteResponse(w, 1, "User does not exist")
+		return
+	}
+	if roomName == "" {
+		utils.WriteResponse(w, 1, "Invalid chat room name")
+		return
+	}
 	for _, room := range chatRoomList {
 		if room == roomName {
-			w.Write(chat_type.GetReturnMessageJson(1, "Chat room already exists"))
+			utils.WriteResponse(w, 1, "Chat room already exist")
 			return
 		}
 	}
@@ -120,7 +129,38 @@ func CreateChatRoomHandler(w http.ResponseWriter, r *http.Request) {
 	chatRoom := getChatRoomByName(roomName)
 	chat_db.WriteChatInfoToLocalFile(chatRoom)
 	chat_db.SaveRoomNameListToFile(chatRoomList)
-	w.Write(chat_type.GetReturnMessageJson(0, "Create chat room successfully"))
+	utils.WriteResponse(w, 0, "Success")
+}
+
+func ChatRoomListHandler(w http.ResponseWriter, r *http.Request) {
+	//userid := r.URL.Query().Get("userid")
+	//if(userid == "") {
+	//	w.Write(chat_type.GetReturnMessageJson(1, "Invalid user id"))
+	//	return
+	//}
+
+	chatRoomList = chat_db.LoadRoomNameListFromFile()
+	slog.Info("ChatRoomListHandler", "chatRoomList", chatRoomList)
+	// Convert chat room list to JSON
+	jsonMsg, err := json.Marshal(chatRoomList)
+	if err != nil {
+		slog.Error("Failed to convert message to JSON", "error", err)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	_, err = w.Write(jsonMsg)
+	if err != nil {
+		slog.Error("Failed to write response", "error", err)
+		return
+	}
+}
+
+func InitChatRoom() {
+	chatRoomList = chat_db.LoadRoomNameListFromFile()
+	for _, room := range chatRoomList {
+		chatRoom := getChatRoomByName(room)
+		chatRoomMap[room] = chatRoom
+	}
 }
 
 func ChatRoomHandler(w http.ResponseWriter, r *http.Request) {
@@ -182,6 +222,10 @@ func handleClientConn(conn *websocket.Conn, id, chatRoomName string) {
 			}
 		}
 		utils.TryTransferImagePathToMessage(&message)
+		// get tUer
+		//tUer := user.GetUserById(id)
+		// 暂时直接使用消息带上来的userName
+		//message.UserName = tUer.UserName
 		message.MsgID = utils.GenerateId()
 		message.SendTime = utils.GetCurTime()
 		// fmt.Println("message:", message)

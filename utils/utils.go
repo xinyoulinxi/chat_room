@@ -23,6 +23,14 @@ func GetChatRoomFilePath(chatName string) string {
 func GetCurTime() string {
 	return time.Now().Format(time.DateTime)
 }
+func GetRandomString(length int) string {
+	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	b := make([]byte, length)
+	for i := range b {
+		b[i] = charset[time.Now().UnixNano()%int64(len(charset))]
+	}
+	return string(b)
+}
 
 // saveFile 根据Base64编码的数据和推断的文件类型保存文件
 func saveFile(message *chat_type.Message) error {
