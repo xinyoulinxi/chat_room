@@ -2,7 +2,7 @@ package chat_room
 
 import (
 	"encoding/json"
-	"fmt"
+	"log/slog"
 	"net/http"
 	chat_db "web_server/db"
 )
@@ -14,11 +14,11 @@ func GetChatRoomList() []string {
 
 func ChatRoomListHandler(w http.ResponseWriter, r *http.Request) {
 	chatRoomList = chat_db.LoadRoomNameListFromFile()
-	fmt.Println("ChatRoomListHandler:", chatRoomList)
+	slog.Info("ChatRoomListHandler", "chatRoomList", chatRoomList)
 	// Convert chat room list to JSON
 	jsonMsg, err := json.Marshal(chatRoomList)
 	if err != nil {
-		fmt.Println("Failed to convert message to JSON:", err)
+		slog.Error("Failed to convert message to JSON", "error", err)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")

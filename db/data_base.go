@@ -2,36 +2,36 @@ package chat_db
 
 import (
 	"encoding/json"
-	"fmt"
-	"io/ioutil"
+	"log/slog"
+	"os"
 	chat_type "web_server/type"
-	utils "web_server/utils"
+	"web_server/utils"
 )
 
 func SaveRoomNameListToFile(chatRoomList []string) {
 	jsonData, err := json.Marshal(chatRoomList)
 	if err != nil {
-		fmt.Println("Failed to marshal room list:", err)
+		slog.Error("Failed to marshal room list", "error", err)
 		return
 	}
-	err = ioutil.WriteFile(utils.RoomListPath, jsonData, 0644)
+	err = os.WriteFile(utils.RoomListPath, jsonData, 0644)
 	if err != nil {
-		fmt.Println("Failed to write room list file:", err)
+		slog.Error("Failed to write room list file", "error", err)
 		return
 	}
-	fmt.Println("Room list saved to file")
+	slog.Info("Room list saved to file")
 }
 
 func LoadRoomNameListFromFile() []string {
-	data, err := ioutil.ReadFile(utils.RoomListPath)
+	data, err := os.ReadFile(utils.RoomListPath)
 	var roomList []string
 	if err != nil {
-		fmt.Println("Failed to read room list file:", err)
+		slog.Error("Failed to read room list file", "error", err)
 		return roomList
 	}
 	err = json.Unmarshal(data, &roomList)
 	if err != nil {
-		fmt.Println("Failed to unmarshal room list:", err)
+		slog.Error("Failed to unmarshal room list", "error", err)
 		return roomList
 	}
 	return roomList
@@ -46,15 +46,15 @@ func initDefaultChatRoom(chatName string) chat_type.ChatRoom {
 
 func LoadChatRoomFromLocalFile(chatName string) chat_type.ChatRoom {
 	// Load chat room from a file or new a empty chat room
-	data, err := ioutil.ReadFile(utils.GetChatRoomFilePath(chatName))
+	data, err := os.ReadFile(utils.GetChatRoomFilePath(chatName))
 	if err != nil {
-		fmt.Println("Failed to read messages file:", err)
+		slog.Error("Failed to read messages file", "error", err)
 		return initDefaultChatRoom(chatName)
 	}
 	messages := make([]chat_type.Message, 0)
 	err = json.Unmarshal(data, &messages)
 	if err != nil {
-		fmt.Println("Failed to unmarshal messages:", err)
+		slog.Error("Failed to unmarshal messages", "error", err)
 		return initDefaultChatRoom(chatName)
 	}
 	chatRoom := chat_type.ChatRoom{RoomName: chatName}
@@ -66,14 +66,14 @@ func WriteChatInfoToLocalFile(chatRoom *chat_type.ChatRoom) error {
 	// Save messages to a file
 	jsonData, err := json.Marshal(chatRoom.Messages)
 	if err != nil {
-		fmt.Println("Failed to marshal messages:", err)
+		slog.Error("Failed to marshal messages", "error", err)
 		return err
 	}
-	err = ioutil.WriteFile(utils.GetChatRoomFilePath(chatRoom.RoomName), jsonData, 0644)
+	err = os.WriteFile(utils.GetChatRoomFilePath(chatRoom.RoomName), jsonData, 0644)
 	if err != nil {
-		fmt.Println("Failed to write messages file:", err)
+		slog.Error("Failed to write messages file", "error", err)
 		return err
 	}
-	fmt.Println("Message saved to file")
+	slog.Info("Message saved to file")
 	return nil
 }

@@ -2,7 +2,7 @@ package chat_room
 
 import (
 	"encoding/json"
-	"fmt"
+	"log/slog"
 	"net/http"
 	chat_db "web_server/db"
 	chat_type "web_server/type"
@@ -35,10 +35,8 @@ func getChatRoomByName(roomName string) *chat_type.ChatRoom {
 			}
 		}
 		if !isExist {
-			fmt.Println("add new chat room:", roomName)
-			fmt.Println(chatRoomList)
+			slog.Info("add new chat room", "roomName", roomName, "chatRoomList", chatRoomList)
 			chatRoomList = append(chatRoomList, roomName)
-			fmt.Println(chatRoomList)
 		}
 		return &chatRoom
 	}
@@ -48,13 +46,13 @@ func sendChatRoomMessagesToNewUser(chatRoom *chat_type.ChatRoom, conn *websocket
 	// Send all messages to the newly connected user
 	jsonMsg, err := json.Marshal(chatRoom.Messages)
 	if err != nil {
-		fmt.Println("Failed to convert message to JSON:", err)
+		slog.Error("Failed to convert message to JSON", "error", err)
 		return
 	}
 
 	err = conn.WriteMessage(websocket.TextMessage, jsonMsg)
 	if err != nil {
-		fmt.Println("Failed to send message to user:", err)
+		slog.Error("Failed to send message to user", "error", err)
 		return
 	}
 }
@@ -86,7 +84,7 @@ func sendMessage(message chat_type.Message, c *websocket.Conn) error {
 	jsonMsg, err := json.Marshal([]chat_type.Message{message})
 	//fmt.Println("send msg:", string(jsonMsg))
 	if err != nil {
-		fmt.Println("Failed to convert message to JSON:", err)
+		slog.Error("Failed to convert message to JSON", "error", err)
 		return err
 	}
 
@@ -98,7 +96,7 @@ func sendMessage(message chat_type.Message, c *websocket.Conn) error {
 func CreateChatRoomHandler(w http.ResponseWriter, r *http.Request) {
 	// Parse request parameters
 	roomName := r.URL.Query().Get("roomName")
-	fmt.Println("CreateChatRoomHandler", roomName)
+	slog.Info("CreateChatRoomHandler", "roomName", roomName)
 	if roomName == "" {
 		w.Write(chat_type.GetReturnMessageJson(1, "Invalid chat room name"))
 		return
@@ -130,7 +128,7 @@ func ChatRoomHandler(w http.ResponseWriter, r *http.Request) {
 	// 获取request中的参数,比如id和chatroom
 	id := r.URL.Query().Get("id")
 	chatRoomName := r.URL.Query().Get("chatroom")
-	fmt.Println("new user join id:", id, ", Room Name:", chatRoomName)
+
 	// Get chat room by name
 	if chatRoomName == "" || chatRoomName == "null" {
 		chatRoomName = "default"
@@ -141,7 +139,7 @@ func ChatRoomHandler(w http.ResponseWriter, r *http.Request) {
 	addNewUserToChatRoom(chatRoom, id)
 	// Add connection to the list of active connections
 	chatRoom.Connections = append(chatRoom.Connections, conn)
-	fmt.Println("new connection current room user=", len(chatRoom.Connections))
+	slog.Info("new user join", "id", id, "roomName", chatRoomName, "memberSize", len(chatRoom.Connections))
 	sendMessage(chat_type.Message{Type: "roomList", ChatRoomList: chatRoomList, RoomName: chatRoomName}, conn)
 	sendChatRoomMessagesToNewUser(chatRoom, conn)
 	// Read messages from the WebSocket connection
@@ -149,9 +147,9 @@ func ChatRoomHandler(w http.ResponseWriter, r *http.Request) {
 		// Read message from the WebSocket
 		_, msg, err := conn.ReadMessage()
 		if err != nil { // remove connection from the list of active connections
-			fmt.Println("Failed to connect :", err)
+			slog.Error("Failed to read message from WebSocket", "id", id, "error", err)
 			chatRoom.Connections = removeConnection(conn, chatRoom.Connections)
-			fmt.Println(id, "Leave, chatRoom.Connections:", len(chatRoom.Connections))
+			slog.Info("Leave, chatRoom.Connections", "id", id, "roomName", chatRoomName, "memberSize", len(chatRoom.Connections))
 			if len(chatRoom.Connections) == 0 {
 				CloseChatRoom(chatRoom)
 			}
@@ -167,7 +165,7 @@ func ChatRoomHandler(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		if err != nil {
-			fmt.Println("Failed to parse message:", err)
+			slog.Error("Failed to parse message", "error", err)
 			continue
 		}
 		utils.TryTransferImagePathToMessage(&message)

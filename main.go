@@ -1,8 +1,8 @@
 package main
 
 import (
-	page_handler "web_server/page_handler"
-	utils "web_server/utils"
+	"web_server/page_handler"
+	"web_server/utils"
 )
 
 func main() {

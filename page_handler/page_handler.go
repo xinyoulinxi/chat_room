@@ -3,8 +3,9 @@ package page_handler
 import (
 	"encoding/json"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
+	"os"
 	"strconv"
 	chat_room "web_server/chat_room"
 	utils "web_server/utils"
@@ -79,13 +80,13 @@ func StartWebServer() {
 
 	// login
 	mux.Handle("/login", utils.NoCacheMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("login")
+		slog.Info("route page to login")
 		http.ServeFile(w, r, "pages/login.html")
 	})))
 
 	// Chat Room
 	mux.Handle("/chat_room", utils.NoCacheMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("chat_room")
+		slog.Info("route page to chat_room")
 		http.ServeFile(w, r, "pages/chat_room.html")
 	})))
 
@@ -100,11 +101,13 @@ func StartWebServer() {
 	// ws
 	mux.HandleFunc("/ws", chat_room.ChatRoomHandler)
 
-	fmt.Printf("Starting server at http://%s\n", url)
-	fmt.Printf("Starting server at http://%s\n", url+"/page_1")
-	fmt.Printf("Starting server at http://%s\n", url+"/login")
-	err := http.ListenAndServe(url+":80", handlers.CORS(headersOk, originsOk, methodsOk)(mux))
+	slog.Info(fmt.Sprintf("Starting server at http://%s", url))
+	slog.Info(fmt.Sprintf("Starting server at http://%s%s", url, "/page_1"))
+	slog.Info(fmt.Sprintf("Starting server at http://%s%s", url, "/login"))
+
+	err := http.ListenAndServe(url, handlers.CORS(headersOk, originsOk, methodsOk)(mux))
 	if err != nil {
-		log.Fatalf("Failed to start server: %v", err)
+		slog.Error("Failed to start server", "error", err)
+		os.Exit(1)
 	}
 }

@@ -2,14 +2,26 @@ package utils
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"log/slog"
+	"os"
+	"strconv"
 )
 
-const DataPath = "data/"
-const ChatRoomPath = "data/chatroom/"
-const FileDir = "data/files/"
-const ImageDir = "data/images/"
-const RoomListPath = "data/room_list.json"
+const (
+	DataPath     = "data/"
+	ChatRoomPath = "data/chatroom/"
+	FileDir      = "data/files/"
+	ImageDir     = "data/images/"
+	RoomListPath = "data/room_list.json"
+	defaultPort  = "80"
+)
+
+type (
+	config struct {
+		IP   string `json:"ipAddress"`
+		Port int    `json:"port"`
+	}
+)
 
 func GetLocalIP() string {
 	// 读取配置文件, 获取IP地址，配置文件格式如下：
@@ -17,30 +29,34 @@ func GetLocalIP() string {
 	//     "ipAddress": 0.0.0.0"
 	// }
 	filePath := "./config.json"
-	data, err := ioutil.ReadFile(filePath)
+	data, err := os.ReadFile(filePath)
 	if err != nil {
-		return ""
+		// 打印英文日志：读取配置文件失败
+		slog.Warn("Read config file failed, use default config", "error", err)
+		return ":" + defaultPort
 	}
-
-	var config struct {
-		IP string `json:"ipAddress"`
-	}
-
+	config := new(config)
 	err = json.Unmarshal(data, &config)
 	if err != nil {
-		return ""
+		slog.Warn("Parse config file failed, use default config", "error", err)
+		return ":" + defaultPort
 	}
-
-	return config.IP
+	if config.Port <= 0 || config.Port > 65535 {
+		// 翻译：端口范围只能在1~65535
+		slog.Warn("Port range must be between 1 and 65535, use default port", "error", err)
+		return config.IP + ":" + defaultPort
+	}
+	return config.IP + ":" + strconv.Itoa(config.Port)
 }
-func EnsureDirEnv() {
-	EnsureDir(DataPath)
-	EnsureDir(FileDir)
-	EnsureDir(ImageDir)
-	EnsureDir(ChatRoomPath)
-	EnsureFileExist(RoomListPath)
 
-}
 func InitEnv() {
-	EnsureDirEnv()
+	dirs := []string{DataPath, FileDir, ImageDir, ChatRoomPath}
+	for _, dir := range dirs {
+		if err := EnsureDir(dir); err != nil {
+			panic(err)
+		}
+	}
+	if err := EnsureFileExist(RoomListPath); err != nil {
+		panic(err)
+	}
 }
