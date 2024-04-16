@@ -2,4 +2,5 @@ config.json
 /data/
 /out/
 /data_back/
-/.idea/
+./idea/workspace.xml
+.idea/vsc.xml
