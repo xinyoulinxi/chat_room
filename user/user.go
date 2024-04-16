@@ -104,10 +104,12 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		utils.WriteResponse(w, chat_type.ErrorInvalidInput, "Invalid input")
 		return
 	}
+
 	if !UserExist(userName) {
 		utils.WriteResponse(w, chat_type.ErrorUserNotExist, "User not exist")
 		return
 	}
+
 	if !CheckPassword(userName, passWord) {
 		utils.WriteResponse(w, chat_type.ErrorInvalidPassword, "Invalid password")
 		return
@@ -119,6 +121,15 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	utils.WriteResponse(w, chat_type.ErrorCodeSuccess, user.UserID)
+}
+
+func UserRegisted(userId string) bool {
+	for _, user := range userList {
+		if user.UserID == userId {
+			return true
+		}
+	}
+	return false
 }
 
 func UserExist(userName string) bool {

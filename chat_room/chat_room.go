@@ -44,6 +44,9 @@ func getChatRoomByName(roomName string) *chat_type.ChatRoom {
 	}
 }
 
+func printMessageInfo(message *chat_type.Message) {
+	slog.Info("printMessageInfo", "id", message.MsgID, "type", message.Type, "userName", message.UserName, "content", message.Content, "image", message.Image, "file", message.File, "sendTime", message.SendTime, "roomName", message.RoomName)
+}
 func sendChatRoomMessagesToNewUser(chatRoom *chat_type.ChatRoom, conn *websocket.Conn) {
 	// Send all messages to the newly connected user
 	var messages []chat_type.Message
@@ -53,6 +56,7 @@ func sendChatRoomMessagesToNewUser(chatRoom *chat_type.ChatRoom, conn *websocket
 	} else {
 		messages = chatRoom.Messages
 	}
+	slog.Info("sendChatRoomMessagesToNewUser", "messages", len(messages))
 	jsonMsg, err := json.Marshal(messages)
 	if err != nil {
 		slog.Error("Failed to convert message to JSON", "error", err)
@@ -90,8 +94,8 @@ func addNewUserToChatRoom(chatRoom *chat_type.ChatRoom, id string) {
 
 func sendMessage(message chat_type.Message, c *websocket.Conn) error {
 	// Convert Message struct to JSON
+	slog.Info("sendMessage", "username", message.UserName, "content", message.Content, "type", message.Type, "roomName", message.RoomName, "sendTime", message.SendTime)
 	jsonMsg, err := json.Marshal([]chat_type.Message{message})
-	slog.Info("send", "msg", string(jsonMsg))
 	if err != nil {
 		slog.Error("Failed to convert message to JSON", "error", err)
 		return err
@@ -106,12 +110,12 @@ func CreateChatRoomHandler(w http.ResponseWriter, r *http.Request) {
 	// Parse request parameters
 	userId := r.URL.Query().Get("id")
 	roomName := r.URL.Query().Get("roomName")
-	slog.Info("CreateChatRoomHandler", "roomName", roomName)
+	slog.Info("CreateChatRoomHandler", "roomName", roomName, "userId", userId)
 	if userId == "" {
 		utils.WriteResponse(w, 1, "Invalid user id")
 		return
 	}
-	if user.UserExist(userId) == false {
+	if user.UserRegisted(userId) == false {
 		utils.WriteResponse(w, 1, "User does not exist")
 		return
 	}

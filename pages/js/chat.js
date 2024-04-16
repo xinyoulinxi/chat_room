@@ -59,7 +59,7 @@ function handleRoomList(message) {
         chatRoom = this.value;
         initSocket();
     };
-    if (chatRoom == null || chatRoom == "") {
+    if (chatRoom == null || chatRoom === "") {
         chatRoom = message.chatRoomList[0];
     }
 
@@ -73,7 +73,7 @@ function handleRoomList(message) {
         option.textContent = room;
         // Add the option to the select element
         select.appendChild(option);
-        if (chatRoom == room) {
+        if (chatRoom === room) {
             option.classList.add("select-text-selected")
         }
     }
@@ -197,7 +197,7 @@ function initSocket() {
 
 function createRoom() {
     getInput("输入需要创建的聊天室名称",true, function (roomName) {
-        if (roomName == null || roomName == "") {
+        if (roomName == null || roomName === "") {
             return;
         }
         fetch('/create_room?id='+userId+'&roomName=' + roomName)
@@ -244,6 +244,7 @@ function sendMessage() {
     const messageObj = {
         userName: userName,
         userId: userId,
+        roomName : chatRoom,
         content: message,
         image: null
     };
@@ -331,7 +332,8 @@ function sendFile() {
             // 创建一个包含用户名、内容、图片和文件名的消息对象
             const messageObj = {
                 userId: userId,
-                room: chatroom,
+                userName:userName,
+                roomName: chatRoom,
                 content: fileName,
                 image: e.target.result, // Base64-encoded image data
             };
