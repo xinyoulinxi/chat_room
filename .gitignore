@@ -4,3 +4,4 @@ config.json
 /data_back/
 .idea/workspace.xml
 .idea/vsc.xml
+.idea/jsLibraryMappings.xml

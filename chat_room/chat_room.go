@@ -47,6 +47,7 @@ func getChatRoomByName(roomName string) *chat_type.ChatRoom {
 func printMessageInfo(message *chat_type.Message) {
 	slog.Info("printMessageInfo", "id", message.MsgID, "type", message.Type, "userName", message.UserName, "content", message.Content, "image", message.Image, "file", message.File, "sendTime", message.SendTime, "roomName", message.RoomName)
 }
+
 func sendChatRoomMessagesToNewUser(chatRoom *chat_type.ChatRoom, conn *websocket.Conn) {
 	// Send all messages to the newly connected user
 	var messages []chat_type.Message
@@ -56,18 +57,23 @@ func sendChatRoomMessagesToNewUser(chatRoom *chat_type.ChatRoom, conn *websocket
 	} else {
 		messages = chatRoom.Messages
 	}
-	slog.Info("sendChatRoomMessagesToNewUser", "messages", len(messages))
-	jsonMsg, err := json.Marshal(messages)
-	if err != nil {
-		slog.Error("Failed to convert message to JSON", "error", err)
-		return
-	}
 
-	err = conn.WriteMessage(websocket.TextMessage, jsonMsg)
-	if err != nil {
-		slog.Error("Failed to send message to user", "error", err)
-		return
+	for _, message := range messages {
+		sendMessage(message, conn)
 	}
+	sendMessage(chat_type.Message{Type: "over", RoomName: chatRoom.RoomName}, conn)
+	slog.Info("sendChatRoomMessagesToNewUser", "messages", len(messages))
+	//jsonMsg, err := json.Marshal(messages)
+	//if err != nil {
+	//	slog.Error("Failed to convert message to JSON", "error", err)
+	//	return
+	//}
+	//
+	//err = conn.WriteMessage(websocket.TextMessage, jsonMsg)
+	//if err != nil {
+	//	slog.Error("Failed to send message to user", "error", err)
+	//	return
+	//}
 }
 
 func CloseChatRoom(chatRoom *chat_type.ChatRoom) {

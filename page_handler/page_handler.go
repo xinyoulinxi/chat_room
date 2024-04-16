@@ -69,17 +69,17 @@ func StartWebServer() {
 	// 使用包装器替代原始的文件服务器
 	mux.Handle("/pages/", http.StripPrefix("/pages/", noStoreFs))
 	// 主页
-	mux.Handle("/", utils.NoCacheMiddleware(http.HandlerFunc(indexHandler)))
+	mux.Handle("/", utils.NormalCacheMiddleware(http.HandlerFunc(indexHandler)))
 	// Image file service
 	imageFs := http.FileServer(http.Dir("data"))
 	mux.Handle("/data/", http.StripPrefix("/data/", imageFs))
 
 	// Page 1
-	mux.Handle("/page_1", utils.NoCacheMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	mux.Handle("/page_1", utils.NormalCacheMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "pages/page_1.html")
 	})))
 	// login
-	mux.Handle("/login", utils.NoCacheMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	mux.Handle("/login", utils.NormalCacheMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		slog.Info("route page to login")
 		http.ServeFile(w, r, "pages/login.html")
 	})))
@@ -90,7 +90,7 @@ func StartWebServer() {
 	mux.HandleFunc("/register_user", user.RegisterHandler)
 
 	// Chat Room
-	mux.Handle("/chat_room", utils.NoCacheMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	mux.Handle("/chat_room", utils.NormalCacheMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		slog.Info("route page to chat_room")
 		http.ServeFile(w, r, "pages/chat_room.html")
 	})))

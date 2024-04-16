@@ -5,10 +5,12 @@ var userId = params.get("userid")
 var userName = params.get("username")
 var chatRoom = params.get("chatroom")
 var socket = null;
+var messageDisplay = document.getElementById('messageDisplay'); // 全局缓存
+var messageInput = document.getElementById('messageInput'); // 全局缓存
 
 init()
 function init() {
-    document.getElementById('messageInput').addEventListener('keydown', function (event) {
+    messageInput.addEventListener('keydown', function (event) {
         if (event.key === 'Enter') {
             event.preventDefault(); // Prevent form submission
             sendMessage();
@@ -49,11 +51,9 @@ function handleRoomList(message) {
     var roomList = document.getElementById('roomList');
     roomList.innerHTML = ""; // Clear the room list
     // clear the message display
-    const messageDisplay = document.getElementById('messageDisplay');
     messageDisplay.innerHTML = "";
-    // Create a select element
-    var select = document.createElement('select');
-
+    var select = roomList.querySelector('select') || document.createElement('select');
+    select.innerHTML = ""; // 仅清空select内部，避免重复创建select元素
     select.classList.add('select-text-selected');
     select.onchange = function () {
         chatRoom = this.value;
@@ -89,7 +89,6 @@ function closeSocket() {
 }
 
 function displayFileMessage(message) {
-    const messageDisplay = document.getElementById('messageDisplay');
     const fileElement = document.createElement('a');
     const downLoadElement = document.createElement('a');
     // 让文件在新窗口打开
@@ -127,8 +126,10 @@ function handleMessage(message) {
     }
      else if (message.type === "text" || message.type === "") {
         displayNormalMessage(message);
-    } else {
+    } else if(message.type === "roomList"){
         handleRoomList(message)
+    }else if(message.type === "over"){
+        messageDisplay.scrollTop = messageDisplay.scrollHeight;
     }
 }
 
@@ -168,7 +169,6 @@ function insertSendTime(message) {
     if (time === "") {
         return;
     }
-    const messageDisplay = document.getElementById('messageDisplay');
     const timeElement = document.createElement('div');
     timeElement.classList.add("message-time-text")
     timeElement.textContent = time;
@@ -183,13 +183,16 @@ function initSocket() {
     socket = new WebSocket('ws://' + window.location.host + '/ws?id=' + userId + '&chatroom=' + chatRoom);
     // Event listener for receiving messages from the server
     socket.onmessage = function (event) {
+        console.log("start")
         var messages = JSON.parse(event.data); // Parse the JSON data into an array
+        console.log("middle")
         messages.forEach(function (message) { // Iterate over each message in the array
-            console.log(message)
+            // console.log(message)
             handleMessage(message);
         });
+        console.log("end")
         // Scroll to the bottom of the message display
-        messageDisplay.scrollTop = messageDisplay.scrollHeight;
+        // messageDisplay.scrollTop = messageDisplay.scrollHeight;
     };
     socket.onopen = function (event) {
     };
@@ -219,14 +222,12 @@ function goLoginPage(){
 }
 function connectToChatRoom() {
     // Check if the userId or room number is empty
-    if (userId == null || userId === "") {
-        showToast('请登录后再进入聊天室');
-        // goLoginPage()
+    if (userId == null || userId === "" || chatRoom == null || chatRoom === "") {
+        showToast('请登录并选择聊天室后再进入');
         return;
     }
-
     // Focus on the message input field
-    document.getElementById('messageInput').focus();
+    messageInput.focus();
 
     // Initialize the WebSocket connection
     initSocket();
@@ -234,9 +235,8 @@ function connectToChatRoom() {
 
 // Function to send a message
 function sendMessage() {
-    const messageInput = document.getElementById('messageInput');
     const message = messageInput.value;
-    if (message == null || message == "") {
+    if (message == null || message === "") {
         showToast('请输入消息内容');
         return;
     }
@@ -256,9 +256,9 @@ function sendMessage() {
 }
 
 function displayImageMessage(message) {
-    const messageDisplay = document.getElementById('messageDisplay');
     const imageElement = document.createElement('img');
     imageElement.src = message.image; // Set src to the image field of the message
+    imageElement.loading = 'lazy'; // 设置图片懒加载
     imageElement.classList.add('message-bubble');
     imageElement.classList.add('message-bubble-img');
     if (message.userId === userId || message.userName === userName) {
@@ -284,7 +284,6 @@ function displayImageMessage(message) {
 
 // Function to display a message
 function displayNormalMessage(message) {
-    const messageDisplay = document.getElementById('messageDisplay');
     const messageElement = document.createElement('div');
     messageElement.textContent = message.content; // Add username before message
     messageElement.classList.add('message-bubble');
