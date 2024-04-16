@@ -26,7 +26,8 @@ type (
 func GetLocalIP() string {
 	// 读取配置文件, 获取IP地址，配置文件格式如下：
 	// {
-	//     "ipAddress": 0.0.0.0"
+	//     "ipAddress": 0.0.0.0",
+	//      "Port":80
 	// }
 	filePath := "./config.json"
 	data, err := os.ReadFile(filePath)
