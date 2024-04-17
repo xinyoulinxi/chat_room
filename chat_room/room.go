@@ -42,6 +42,7 @@ func (h *Room) BroadCast(m chat_type.Message) {
 	h.broadcast <- m
 }
 
+// UserJoin 将用户加入房间
 func (h *Room) UserJoin(conn *websocket.Conn, user *chat_type.User) {
 	client := &Client{
 		User: user,
@@ -52,11 +53,12 @@ func (h *Room) UserJoin(conn *websocket.Conn, user *chat_type.User) {
 		},
 		send: make(chan []byte),
 		onClientLeave: func(c *Client) {
+			slog.Info("user leave", "id", c.UserID, "userName", c.UserName, "roomName", h.RoomName)
 			h.unregister <- c
 		},
 	}
 	client.Serve()
-	slog.Info("new user join", "id", user.UserID, "userName", user.UserName, "roomName", h.RoomName, "memberSize", len(h.clients))
+	slog.Info("new user join", "id", user.UserID, "userName", user.UserName, "roomName", h.RoomName)
 	h.register <- client
 }
 
@@ -81,7 +83,7 @@ func (h *Room) serve() {
 		select {
 		case client := <-h.register:
 			h.clients[client] = true
-			h.sendHistory(client)
+			// h.sendHistory(client)
 		case client := <-h.unregister:
 			if _, ok := h.clients[client]; ok {
 				delete(h.clients, client)

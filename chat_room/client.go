@@ -40,7 +40,7 @@ func (c *Client) Serve() {
 }
 
 func (c *Client) Send(m chat_type.Message) error {
-	slog.Info("sendMessage to client", "username", m.UserName, "content", m.Content, "type", m.Type, "roomName", m.RoomName, "sendTime", m.SendTime)
+	slog.Info("sendMessage to client", "id", c.UserID, "userName", c.UserName, "content", m.Content, "type", m.Type, "roomName", m.RoomName, "sendTime", m.SendTime)
 	jsonMsg, err := json.Marshal([]chat_type.Message{m})
 	if err != nil {
 		slog.Error("Failed to convert m to JSON", "error", err)

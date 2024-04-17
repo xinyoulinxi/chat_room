@@ -5,6 +5,7 @@ import (
 	"github.com/gorilla/websocket"
 	"log/slog"
 	"net/http"
+	chat_type "web_server/type"
 	"web_server/user"
 	"web_server/utils"
 	// "github.com/gorilla/handlers"
@@ -80,7 +81,7 @@ func HistoryMessagesHandler(w http.ResponseWriter, r *http.Request) {
 		utils.WriteResponse(w, chat_type.ErrorInvalidInput, "Chat room not exist")
 		return
 	}
-	chatRoom := getChatRoomByName(roomName)
+	chatRoom, _ := GetChatRoom(roomName)
 	var messages []chat_type.Message
 	count := loginData.Count
 	if count <= 0 {

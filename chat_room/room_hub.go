@@ -31,6 +31,11 @@ func ListChatRoom() []string {
 	return chatRoomList
 }
 
+func ChatRoomExist(roomName string) bool {
+	_, ok := chatRoomHub[roomName]
+	return ok
+}
+
 // getRoom 从本地文件加载房间信息
 func getRoom(roomName string) *Room {
 	chatRoom := chat_db.LoadChatRoomFromLocalFile(roomName)
