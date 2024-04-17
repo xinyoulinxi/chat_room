@@ -76,13 +76,6 @@ func (c *Client) readPump() {
 			slog.Error("Failed to parse message", "error", err)
 			continue
 		}
-		// 限制message.Image的文件大小
-		if message.Image != "" {
-			if len(message.Image) > imageSizeLimit {
-				message.Image = ""
-			}
-		}
-		utils.TryTransferImagePathToMessage(&message)
 		// get tUer
 		// tUer := user.GetUserById(id)
 		// 暂时直接使用消息带上来的userName
