@@ -4,6 +4,7 @@ import (
 	"github.com/gorilla/websocket"
 	"log/slog"
 	"sync"
+	chat_db "web_server/db"
 	chat_type "web_server/type"
 )
 
@@ -24,10 +25,10 @@ type Room struct {
 	unregister chan *Client
 
 	// Current room
-	chat_type.ChatRoom
+	*chat_type.ChatRoom
 }
 
-func newRoom(room chat_type.ChatRoom) *Room {
+func newRoom(room *chat_type.ChatRoom) *Room {
 	return &Room{
 		broadcast:  make(chan chat_type.Message),
 		register:   make(chan *Client),
@@ -78,12 +79,17 @@ func (h *Room) sendHistory(c *Client) {
 	_ = c.Send(chat_type.Message{Type: "over", RoomName: h.RoomName})
 }
 
+func (h *Room) sendRoomList(c *Client) {
+	_ = c.Send(chat_type.Message{Type: "roomList", ChatRoomList: ListChatRoom()})
+}
+
 func (h *Room) serve() {
 	for {
 		select {
 		case client := <-h.register:
 			h.clients[client] = true
 			// h.sendHistory(client)
+			h.sendRoomList(client)
 		case client := <-h.unregister:
 			if _, ok := h.clients[client]; ok {
 				delete(h.clients, client)
@@ -91,7 +97,7 @@ func (h *Room) serve() {
 			}
 		case message := <-h.broadcast:
 			h.Messages = append(h.Messages, message)
-			// TODO 消息持久化
+			_ = chat_db.WriteChatInfoToLocalFile(h.ChatRoom)
 			for client := range h.clients {
 				_ = client.Send(message)
 			}

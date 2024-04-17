@@ -40,15 +40,15 @@ func LoadRoomNameListFromFile() []string {
 }
 
 // initDefaultChatRoom 初始化默认聊天室
-func initDefaultChatRoom(chatName string) chat_type.ChatRoom {
+func initDefaultChatRoom(chatName string) *chat_type.ChatRoom {
 	chatRoom := chat_type.ChatRoom{RoomName: chatName}
 	chatRoom.Messages = make([]chat_type.Message, 0)
 	chatRoom.Messages = append(chatRoom.Messages, chat_type.Message{Type: "text", Content: "welcome to " + chatName + "!"})
-	return chatRoom
+	return &chatRoom
 }
 
 // LoadChatRoomFromLocalFile 从本地文件中读取聊天室信息
-func LoadChatRoomFromLocalFile(chatName string) chat_type.ChatRoom {
+func LoadChatRoomFromLocalFile(chatName string) *chat_type.ChatRoom {
 	// Load chat room from a file or new a empty chat room
 	data, err := os.ReadFile(utils.GetChatRoomFilePath(chatName))
 	if err != nil {
@@ -61,7 +61,7 @@ func LoadChatRoomFromLocalFile(chatName string) chat_type.ChatRoom {
 		slog.Error("Failed to unmarshal messages", "error", err)
 		return initDefaultChatRoom(chatName)
 	}
-	return chat_type.ChatRoom{RoomName: chatName, Messages: messages}
+	return &chat_type.ChatRoom{RoomName: chatName, Messages: messages}
 }
 
 // WriteChatInfoToLocalFile 将聊天室信息保存到本地文件
