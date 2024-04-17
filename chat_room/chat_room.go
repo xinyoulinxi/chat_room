@@ -62,9 +62,9 @@ func sendChatRoomMessagesToNewUser(chatRoom *chat_type.ChatRoom, conn *websocket
 		sendMessage(message, conn)
 	}
 	sendMessage(chat_type.Message{Type: "over", RoomName: chatRoom.RoomName}, conn)
-	slog.Info("sendChatRoomMessagesToNewUser", "messages", len(messages))
-	//jsonMsg, err := json.Marshal(messages)
-	//if err != nil {
+	slog.Info("sendChatRoomMessagesToNewUser", "messageCount", len(messages))
+	// jsonMsg, err := json.Marshal(messages)
+	// if err != nil {
 	//	slog.Error("Failed to convert message to JSON", "error", err)
 	//	return
 	//}

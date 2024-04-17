@@ -196,6 +196,16 @@ function initSocket() {
     };
     socket.onopen = function (event) {
     };
+    // 自动重连
+    socket.onclose = function (event) {
+        if (socket.readyState === WebSocket.CLOSED) {
+            console.log("socket close")
+            setTimeout(function () {
+                showToast("连接断开，尝试重新连接...",{duration:3000});
+                initSocket();
+            }, 5000);
+        }
+    };
 }
 
 function createRoom() {
@@ -301,10 +311,10 @@ function displayNormalMessage(message) {
     messageDisplay.appendChild(messageElement);
 }
 
-function showToast(text) {
+function showToast(text,{duration=2000}) {
     Toastify({
         text: text,
-        duration: 2000, // Toast 持续显示的时间（毫秒）
+        duration: duration, // Toast 持续显示的时间（毫秒）
         close: false, // 是否显示关闭按钮
         gravity: "top", // Toast 出现的位置，可以是 "top" 或 "bottom"
         position: 'center', // Toast 水平方向的位置，可以是 "left", "center", 或 "right"
