@@ -17,7 +17,6 @@ function init() {
         }
     });
     connectToChatRoom();
-    getHistoryMessages();
 }
 
 function getHistoryMessages() {
@@ -78,14 +77,12 @@ function getInput(title, showCancelButton, callback) {
 function handleRoomList(message) {
     var roomList = document.getElementById('roomList');
     roomList.innerHTML = ""; // Clear the room list
-    // clear the message display
-    messageDisplay.innerHTML = "";
     var select = roomList.querySelector('select') || document.createElement('select');
     select.innerHTML = ""; // 仅清空select内部，避免重复创建select元素
     select.classList.add('select-text-selected');
     select.onchange = function () {
         chatRoom = this.value;
-        initSocket();
+        connectToChatRoom();
     };
     if (chatRoom == null || chatRoom === "") {
         chatRoom = message.chatRoomList[0];
@@ -230,7 +227,7 @@ function initSocket() {
             console.log("socket close")
             setTimeout(function () {
                 showToast("连接断开，尝试重新连接...", { duration: 3000 });
-                initSocket();
+                connectToChatRoom();
             }, 5000);
         }
     };
@@ -247,7 +244,7 @@ function createRoom() {
                 if (data.errorCode === 0) {
                     showToast("聊天室创建成功");
                     chatRoom = roomName;
-                    initSocket();
+                    connectToChatRoom();
                 } else {
                     showToast(data.message);
                 }
@@ -267,6 +264,11 @@ function connectToChatRoom() {
     // Focus on the message input field
     messageInput.focus();
 
+    // clear the message display
+    messageDisplay.innerHTML = "";
+    
+    getHistoryMessages();
+    
     // Initialize the WebSocket connection
     initSocket();
 }
