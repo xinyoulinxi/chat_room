@@ -131,6 +131,9 @@ function handleMessage(message) {
     }else if(message.type === "over"){
         messageDisplay.scrollTop = messageDisplay.scrollHeight;
     }
+    if(message.userId === userId || message.userName === userName){
+        messageDisplay.scrollTop = messageDisplay.scrollHeight;
+    }
 }
 
 function getOkTimeText(currentDate, time) {
