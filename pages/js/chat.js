@@ -11,7 +11,7 @@ var messageInput = document.getElementById('messageInput'); // 全局缓存
 init()
 function init() {
     messageInput.addEventListener('keydown', function (event) {
-        if (!e.isComposing && event.key === 'Enter') {
+        if (!event.isComposing && event.key === 'Enter') {
             event.preventDefault(); // Prevent form submission
             sendMessage();
         }
