@@ -32,23 +32,22 @@ func GetRandomString(length int) string {
 	return string(b)
 }
 
-// saveFile 根据Base64编码的数据和推断的文件类型保存文件
-func saveFile(message *chat_type.Message) error {
-	fragments := strings.Split(message.Image, ",")
+// SaveFile 根据Base64编码的数据和推断的文件类型保存文件
+func SaveFile(name string, fileData *string) (string, string, error) {
+	fragments := strings.Split(*fileData, ",")
 	base64Data := fragments[1]
-	name := message.Content
 	// 解码Base64字符串
 	data, err := base64.StdEncoding.DecodeString(base64Data)
 	if err != nil {
 		slog.Error("Failed to decode base64 data", "error", err)
-		return err
+		return "", "", err
 	}
 
 	// 推断文件类型
 	kind, err := filetype.Match(data)
 	if err != nil {
 		slog.Error("Failed to infer file type", "error", err)
-		return err
+		return "", "", err
 	}
 
 	// 获取对应的文件扩展名
@@ -58,14 +57,13 @@ func saveFile(message *chat_type.Message) error {
 	slog.Info("Detected file type", "type", kind.MIME.Type)
 
 	filename := ""
+	fileType := ""
 	if kind.MIME.Type == "image" {
 		filename = ImageDir + name
-		message.Type = "image"
-		message.Image = filename
+		fileType = "image"
 	} else {
 		filename = FileDir + name
-		message.Type = "file"
-		message.File = filename
+		fileType = "file"
 	}
 	if ext == "" {
 		ext = "bin" // 使用通用二进制扩展名作为后备
@@ -74,22 +72,33 @@ func saveFile(message *chat_type.Message) error {
 	// 保存文件
 	err = os.WriteFile(filename, data, 0666)
 	if err != nil {
-		return err
+		return "", fileType, err
 	}
 
-	return nil
+	return filename, fileType, nil
 }
 
 func TryTransferImagePathToMessage(message *chat_type.Message) {
+	if message.Type == "image" || message.Type == "file" {
+		return
+	}
+	slog.Info("TryTransferImagePathToMessage")
 	if message.Image != "" {
-		slog.Info("TransferImagePathToMessage")
 		message.Type = "image"
 		slog.Info("start to decode image data")
 		fragments := strings.Split(message.Image, ",")
 		if len(fragments) > 1 {
-			if err := saveFile(message); err != nil {
+			filePath, fileType, err := SaveFile(message.Content, &fragments[1])
+			if err != nil {
 				slog.Error("Failed to save file", "error", err)
+				return
 			}
+			if fileType == "image" {
+				message.Image = filePath
+			} else {
+				message.File = filePath
+			}
+			message.Type = fileType
 		} else {
 			u, err := url.Parse(fragments[0])
 			if err != nil {
@@ -102,6 +111,7 @@ func TryTransferImagePathToMessage(message *chat_type.Message) {
 		message.Type = "text"
 	}
 }
+
 
 // noCacheMiddleware 为响应添加缓存控制头
 func NoCacheMiddleware(next http.Handler) http.Handler {
