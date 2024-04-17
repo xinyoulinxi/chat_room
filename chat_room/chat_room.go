@@ -2,13 +2,14 @@ package chat_room
 
 import (
 	"encoding/json"
-	"github.com/gorilla/websocket"
 	"log/slog"
 	"net/http"
 	chat_db "web_server/db"
 	chat_type "web_server/type"
 	"web_server/user"
 	"web_server/utils"
+
+	"github.com/gorilla/websocket"
 	// "github.com/gorilla/handlers"
 )
 
@@ -46,34 +47,6 @@ func getChatRoomByName(roomName string) *chat_type.ChatRoom {
 
 func printMessageInfo(message *chat_type.Message) {
 	slog.Info("printMessageInfo", "id", message.MsgID, "type", message.Type, "userName", message.UserName, "content", message.Content, "image", message.Image, "file", message.File, "sendTime", message.SendTime, "roomName", message.RoomName)
-}
-
-func sendChatRoomMessagesToNewUser(chatRoom *chat_type.ChatRoom, conn *websocket.Conn) {
-	// Send all messages to the newly connected user
-	var messages []chat_type.Message
-	if len(chatRoom.Messages) > maxHistoryCount {
-		// 保留最新100条
-		messages = chatRoom.Messages[len(chatRoom.Messages)-maxHistoryCount:]
-	} else {
-		messages = chatRoom.Messages
-	}
-
-	for _, message := range messages {
-		sendMessage(message, conn)
-	}
-	sendMessage(chat_type.Message{Type: "over", RoomName: chatRoom.RoomName}, conn)
-	slog.Info("sendChatRoomMessagesToNewUser", "messageCount", len(messages))
-	// jsonMsg, err := json.Marshal(messages)
-	// if err != nil {
-	//	slog.Error("Failed to convert message to JSON", "error", err)
-	//	return
-	//}
-	//
-	//err = conn.WriteMessage(websocket.TextMessage, jsonMsg)
-	//if err != nil {
-	//	slog.Error("Failed to send message to user", "error", err)
-	//	return
-	//}
 }
 
 func CloseChatRoom(chatRoom *chat_type.ChatRoom) {
@@ -141,13 +114,74 @@ func CreateChatRoomHandler(w http.ResponseWriter, r *http.Request) {
 	chat_db.SaveRoomNameListToFile(chatRoomList)
 	utils.WriteResponse(w, 0, "Success")
 }
+func HistoryMessagesHandler(w http.ResponseWriter, r *http.Request) {
+	// 确保关闭请求体
+	defer r.Body.Close()
+	// 检查请求方法是否为POST
+	if r.Method != http.MethodPost {
+		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+		return
+	}
 
+	// 解析请求体
+	var loginData struct {
+		UserId   string `json:"userId"`
+		ChatRoom string `json:"chatRoom"`
+		Count    int    `json:"count"`
+	}
+
+	err := json.NewDecoder(r.Body).Decode(&loginData)
+	if err != nil {
+		utils.WriteResponse(w, chat_type.ErrorCodeFail, "Failed to parse request body")
+		return
+	}
+	userId := loginData.UserId
+	roomName := loginData.ChatRoom
+
+	slog.Info("HistoryMessagesHandler", "userId", userId, "ChatRoom", roomName)
+	if userId == "" || roomName == "" {
+		utils.WriteResponse(w, chat_type.ErrorInvalidInput, "Invalid user id or chat room name")
+		return
+	}
+
+	if !user.UserRegisted(userId) {
+		utils.WriteResponse(w, chat_type.ErrorUserNotExist, "User not exist")
+		return
+	}
+	if !ChatRoomExist(roomName) {
+		utils.WriteResponse(w, chat_type.ErrorInvalidInput, "Chat room not exist")
+		return
+	}
+	chatRoom := getChatRoomByName(roomName)
+	var messages []chat_type.Message
+	count := loginData.Count
+	if count <= 0 {
+		count = maxHistoryCount
+	}
+	if len(chatRoom.Messages) > count {
+		// 保留最新100条
+		messages = chatRoom.Messages[len(chatRoom.Messages)-count:]
+	} else {
+		messages = chatRoom.Messages
+	}
+	// 将chatRoom.Messages转换成json字符串
+	jsonMsg, err := json.Marshal(messages)
+	if err != nil {
+		slog.Error("Failed to convert message to JSON", "error", err)
+		return
+	}
+	slog.Info("HistoryMessagesHandler", "messages size", len(messages))
+	utils.WriteResponseWithData(w, chat_type.ErrorCodeSuccess, "Success", jsonMsg)
+}
+func ChatRoomExist(chatRoomName string) bool {
+	for _, room := range chatRoomList {
+		if room == chatRoomName {
+			return true
+		}
+	}
+	return false
+}
 func ChatRoomListHandler(w http.ResponseWriter, r *http.Request) {
-	//userid := r.URL.Query().Get("userid")
-	//if(userid == "") {
-	//	w.Write(chat_type.GetReturnMessageJson(1, "Invalid user id"))
-	//	return
-	//}
 
 	chatRoomList = chat_db.LoadRoomNameListFromFile()
 	slog.Info("ChatRoomListHandler", "chatRoomList", chatRoomList)
@@ -204,7 +238,6 @@ func handleClientConn(conn *websocket.Conn, id, chatRoomName string) {
 	chatRoom.Connections = append(chatRoom.Connections, conn)
 	slog.Info("new user join", "id", id, "roomName", chatRoomName, "memberSize", len(chatRoom.Connections))
 	sendMessage(chat_type.Message{Type: "roomList", ChatRoomList: chatRoomList, RoomName: chatRoomName}, conn)
-	sendChatRoomMessagesToNewUser(chatRoom, conn)
 	// Read messages from the WebSocket connection
 	for {
 		// Read message from the WebSocket
