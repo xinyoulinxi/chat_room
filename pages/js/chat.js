@@ -283,6 +283,7 @@ function sendMessage() {
     // Create a message object with username and content
     const messageObj = {
         userName: userName,
+        type:"text",
         userId: userId,
         roomName: chatRoom,
         content: message,
@@ -293,6 +294,30 @@ function sendMessage() {
 
     // Clear the input field
     messageInput.value = '';
+}
+
+function uploadFile(fileName, data, callback) {
+    fetch('/upload_file', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            userId: userId,
+            fileName: fileName,
+            data: data
+        })
+    })
+        .then(response => response.json())
+        .then(data => {
+            if (data.errorCode !== 0) {
+                showToast(data.message);
+            } else {
+                console.log("upload file success")
+                callback(data.data.filePath,data.data.fileType)
+            }
+        })
+        .catch(error => console.error('Error:', error));
 }
 
 function displayImageMessage(message) {
@@ -368,17 +393,24 @@ function sendFile() {
                 showToast("文件大小不能超过20MB");
                 return;
             }
-            // 创建一个包含用户名、内容、图片和文件名的消息对象
-            const messageObj = {
-                userId: userId,
-                userName: userName,
-                roomName: chatRoom,
-                content: fileName,
-                image: e.target.result, // Base64-encoded image data
-            };
-            socket.send(JSON.stringify(messageObj));
-            showToast("文件发送成功");
-            fileInput.value = ''; // 重置文件输入以便下次使用
+            uploadFile(fileName, e.target.result, function(filePath,fileType){
+                // 创建一个包含用户名、内容、图片和文件名的消息对象
+                console.log(filePath,fileType)
+                const messageObj = {
+                    type:fileType,
+                    userId: userId,
+                    content:fileName,
+                    userName: userName,
+                    roomName: chatRoom,
+                };
+                if(fileType === 'image')
+                    messageObj.image = filePath;
+                else
+                    messageObj.file = filePath;
+                socket.send(JSON.stringify(messageObj));
+                showToast("文件发送成功");
+                fileInput.value = ''; // 重置文件输入以便下次使用
+            })
         };
         reader.readAsDataURL(file);
     } else {
