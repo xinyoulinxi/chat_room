@@ -32,10 +32,10 @@ function getHistoryMessages() {
     })
         .then(response => response.json())
         .then(data => {
-            console.log("get history message size",data.data.length)
             if (data.errorCode !== 0) {
                 showToast(data.message);
             } else {
+                console.log("get history message size",data.data.length)
                 data.data.forEach(message => {
                     handleMessage(message)
                 })
