@@ -114,8 +114,11 @@ func (h *Room) serve() {
 				RemoveChatRoom(h.RoomName)
 			}
 		case message := <-h.broadcast:
-			h.Messages = append(h.Messages, message)
-			_ = chat_db.WriteChatInfoToLocalFile(h.ChatRoom)
+			switch message.Type {
+			case "text", "image", "file":
+				h.Messages = append(h.Messages, message)
+				_ = chat_db.WriteChatInfoToLocalFile(h.ChatRoom)
+			}
 			for client := range h.clients {
 				_ = client.Send(message)
 			}
