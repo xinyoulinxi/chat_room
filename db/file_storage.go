@@ -35,28 +35,33 @@ func (f *fileStorage) getKey(key string, group ...string) string {
 
 func (f *fileStorage) Set(key string, value Serializable, group ...string) error {
 	key = f.getKey(key, group...)
-	_, ok := f.keyMap.Load(key)
+	v, ok := f.keyMap.LoadOrStore(key, &sync.Mutex{})
+	mutex := v.(*sync.Mutex)
 	if !ok {
 		if err := utils.EnsureFileExist(key); err != nil {
 			return err
 		}
-		f.keyMap.Store(key, struct{}{})
 	}
 	bytes, err := value.Serialize()
 	if err != nil {
 		return err
 	}
+	mutex.Lock()
+	defer mutex.Unlock()
 	return os.WriteFile(key, bytes, 0644)
 }
 
 func (f *fileStorage) Get(key string, value Serializable, group ...string) (bool, error) {
 	key = f.getKey(key, group...)
-	if _, ok := f.keyMap.Load(key); !ok {
+	v, ok := f.keyMap.LoadOrStore(key, &sync.Mutex{})
+	mutex := v.(*sync.Mutex)
+	if !ok {
 		if err := utils.EnsureFileExist(key); err != nil {
 			return false, err
 		}
-		f.keyMap.Store(key, struct{}{})
 	}
+	mutex.Lock()
+	defer mutex.Unlock()
 	bytes, err := os.ReadFile(key)
 	if err != nil {
 		return false, err
