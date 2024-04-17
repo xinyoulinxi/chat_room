@@ -86,6 +86,9 @@ func StartWebServer() {
 	// login
 	mux.HandleFunc("/login_user", user.LoginHandler)
 
+	// history_messages
+	mux.HandleFunc("/history_messages", chat_room.HistoryMessagesHandler)
+
 	// register
 	mux.HandleFunc("/register_user", user.RegisterHandler)
 
