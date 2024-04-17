@@ -38,11 +38,20 @@ func ListChatRoom() []string {
 	return chatRoomList
 }
 
-func ChatRoomExist(roomName string) bool {
+func ChatRoomExist(roomName string) (bool, bool) {
 	mux.RLock()
 	defer mux.RUnlock()
 	_, ok := chatRoomHub[roomName]
-	return ok
+	if !ok {
+		sort.Sort(sort.StringSlice(chatRoomList))
+		index := sort.SearchStrings(chatRoomList, roomName)
+		if index >= len(chatRoomList) || chatRoomList[index] != roomName {
+			return false, false
+		} else {
+			return true, false
+		}
+	}
+	return true, true
 }
 
 // getRoom 从本地文件加载房间信息

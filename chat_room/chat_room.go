@@ -77,7 +77,7 @@ func HistoryMessagesHandler(w http.ResponseWriter, r *http.Request) {
 		utils.WriteResponse(w, chat_type.ErrorUserNotExist, "User not exist")
 		return
 	}
-	if !ChatRoomExist(roomName) {
+	if exist, _ := ChatRoomExist(roomName); !exist {
 		utils.WriteResponse(w, chat_type.ErrorInvalidInput, "Chat room not exist")
 		return
 	}
