@@ -159,14 +159,6 @@ func UploadFilehandler(w http.ResponseWriter, r *http.Request) {
 func ChatRoomListHandler(w http.ResponseWriter, r *http.Request) {
 	userId := r.URL.Query().Get("id")
 	slog.Info("ChatRoomListHandler", "userId", userId)
-	if userId == "" {
-		utils.WriteResponse(w, chat_type.ErrorInvalidInput, "Invalid user id")
-		return
-	}
-	if user.UserRegisted(userId) == false {
-		utils.WriteResponse(w, chat_type.ErrorUserNotExist, "User does not exist")
-		return
-	}
 
 	roomList := ListChatRoom()
 	slog.Info("ChatRoomListHandler", "chatRoomList", roomList)

@@ -2,6 +2,7 @@ config.json
 /data/
 /out/
 /data_back/
+/data_db/
 .idea/workspace.xml
 .idea/vsc.xml
 .idea/jsLibraryMappings.xml

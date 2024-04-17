@@ -28,13 +28,6 @@ func InitChatRoomHub() {
 
 // ListChatRoom 返回当前服务器房间名称列表
 func ListChatRoom() []string {
-	// mux.RLock()
-	// defer mux.RUnlock()
-	// var chatRoomList = make([]string, 0, len(chatRoomHub))
-	// for roomName := range chatRoomHub {
-	// 	chatRoomList = append(chatRoomList, roomName)
-	// }
-	// return chatRoomList
 	return chatRoomList
 }
 

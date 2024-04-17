@@ -9,7 +9,9 @@ import (
 
 const (
 	DataPath    = "data/"
+	DbPath      = "data_db/"
 	FileDir     = "data/files/"
+	ChatRoomDir = DbPath + "chatroom/"
 	ImageDir    = "data/images/"
 	defaultPort = "80"
 )
@@ -49,7 +51,7 @@ func GetLocalIP() string {
 }
 
 func InitEnv() {
-	dirs := []string{FileDir, ImageDir}
+	dirs := []string{DataPath, FileDir, ImageDir, ChatRoomDir}
 	for _, dir := range dirs {
 		if err := EnsureDir(dir); err != nil {
 			panic(err)

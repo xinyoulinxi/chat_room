@@ -45,25 +45,28 @@ function showToast(text) {
         onClick: function () { } // 点击 Toast 时执行的函数
     }).showToast();
 }
+
 function initRoomList() {
     // 访问服务器，通过room_list接口获取房间列表
     fetch('/room_list')
         .then(response => response.json())
         .then(data => {
+            console.log(data)
+            var roomListData = data.data
             // 更新房间列表
             var roomList = document.getElementById('roomList');
             roomList.innerHTML = '';
             // Create a select element
             var select = document.createElement('select');
             select.classList.add('select-text');
-            if(data == null || data.length == 0) {
+            if(roomListData == null || roomListData.length === 0) {
                 return
             }
-            chatRoom = data[0]
+            chatRoom = roomListData[0]
             select.onchange = function () {
                 chatRoom = this.value;
             };
-            data.forEach(room => {
+            roomListData.forEach(room => {
                 // Create an option for each room
                 var option = document.createElement('option');
                 option.classList.add('select-text');

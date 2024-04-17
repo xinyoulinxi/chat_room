@@ -48,6 +48,7 @@ func LoadChatRoomFromLocalFile(chatName string) *chat_type.ChatRoom {
 func WriteChatInfoToLocalFile(chatRoom *chat_type.ChatRoom) error {
 	chatName := chatRoom.RoomName
 	messages := chatRoom.Messages
+	slog.Info("WriteChatInfoToLocalFile", "room", chatName, "messages", messages)
 	err := Default().Set("chatroom_"+chatName, &messages, "chatroom")
 	if err != nil {
 		slog.Error("Failed to write room message", "room", chatName, "error", err)
