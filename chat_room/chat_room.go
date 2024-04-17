@@ -156,21 +156,29 @@ func UploadFilehandler(w http.ResponseWriter, r *http.Request) {
 	slog.Info("uploadFilehandler", "userId", userId)
 }
 
-func ChatRoomListHandler(w http.ResponseWriter, _ *http.Request) {
+func ChatRoomListHandler(w http.ResponseWriter, r *http.Request) {
+	userId := r.URL.Query().Get("id")
+	slog.Info("ChatRoomListHandler", "userId", userId)
+	if userId == "" {
+		utils.WriteResponse(w, chat_type.ErrorInvalidInput, "Invalid user id")
+		return
+	}
+	if user.UserRegisted(userId) == false {
+		utils.WriteResponse(w, chat_type.ErrorUserNotExist, "User does not exist")
+		return
+	}
+
 	roomList := ListChatRoom()
 	slog.Info("ChatRoomListHandler", "chatRoomList", roomList)
 	// Convert chat room list to JSON
 	jsonMsg, err := json.Marshal(roomList)
 	if err != nil {
+		utils.WriteResponse(w, chat_type.ErrorCodeFail, "Failed to get room list")
 		slog.Error("Failed to convert message to JSON", "error", err)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
-	_, err = w.Write(jsonMsg)
-	if err != nil {
-		slog.Error("Failed to write response", "error", err)
-		return
-	}
+	utils.WriteResponseWithData(w, chat_type.ErrorCodeSuccess, "Success", jsonMsg)
 }
 
 // ChatRoomHandler 处理用户加入房间
@@ -185,7 +193,11 @@ func ChatRoomHandler(w http.ResponseWriter, r *http.Request) {
 	// 根据id获取用户
 	u := user.GetUserById(id)
 	if u == nil {
-		http.Error(w, "User not found", http.StatusUnauthorized)
+		utils.WriteResponse(w, chat_type.ErrorInvalidInput, "Invalid user id")
+		return
+	}
+	if exist, _ := ChatRoomExist(chatRoomName); !exist {
+		utils.WriteResponse(w, chat_type.ErrorInvalidInput, "Chat room not exist")
 		return
 	}
 	// Get chat room by name

@@ -1,4 +1,3 @@
-
 // Establish a WebSocket connection
 var params = new URLSearchParams(window.location.search);
 var userId = params.get("userid")
@@ -9,6 +8,7 @@ var messageDisplay = document.getElementById('messageDisplay'); // 全局缓存
 var messageInput = document.getElementById('messageInput'); // 全局缓存
 
 init()
+
 function init() {
     messageInput.addEventListener('keydown', function (event) {
         if (!event.isComposing && event.key === 'Enter') {
@@ -16,6 +16,8 @@ function init() {
             sendMessage();
         }
     });
+    // Focus on the message input field
+    messageInput.focus();
     connectToChatRoom();
 }
 
@@ -35,12 +37,13 @@ function getHistoryMessages() {
             if (data.errorCode !== 0) {
                 showToast(data.message);
             } else {
-                console.log("get history message size",data.data.length)
+                console.log("get history message size", data.data.length)
                 data.data.forEach(message => {
                     handleMessage(message)
                 })
-
                 messageDisplay.scrollTop = messageDisplay.scrollHeight;
+                // Initialize the WebSocket connection
+                initSocket();
             }
         })
         .catch(error => console.error('Error:', error));
@@ -53,14 +56,13 @@ function getInput(title, showCancelButton, callback) {
         inputAttributes: {
             autocapitalize: 'off'
         },
-        showCancelButton: true,
         confirmButtonText: '确认',
         cancelButtonText: '取消',
         showCancelButton: showCancelButton,
         showLoaderOnConfirm: true,
         preConfirm: (login) => {
             // 可以在这里处理输入的数据，如发送到服务器
-            if (login == null || login == "") {
+            if (login == null || login === "") {
                 showToast("用户名不能为空，请重新输入");
                 return false;
             }
@@ -74,7 +76,31 @@ function getInput(title, showCancelButton, callback) {
     });
 }
 
-function handleRoomList(message) {
+function getRoomList() {
+    fetch('/room_list?id=' + userId)
+        .then(response => response.json())
+        .then(data => {
+            if (data.errorCode !== 0) {
+                showToast(data.message);
+            } else {
+                handleRoomList(data.data)
+            }
+        });
+}
+
+function isChatRoomExist(roomName, roomList) {
+    for (var i = 0; i < roomList.length; i++) {
+        if (roomList[i] === roomName)
+            return true;
+    }
+    return false;
+}
+
+function handleRoomList(chatRoomList) {
+    if (chatRoomList == null || chatRoomList.length === 0) {
+        showToast("当前没有聊天室，请先创建一个")
+        return;
+    }
     var roomList = document.getElementById('roomList');
     roomList.innerHTML = ""; // Clear the room list
     var select = roomList.querySelector('select') || document.createElement('select');
@@ -84,13 +110,15 @@ function handleRoomList(message) {
         chatRoom = this.value;
         connectToChatRoom();
     };
-    if (chatRoom == null || chatRoom === "") {
-        chatRoom = message.chatRoomList[0];
+    if (chatRoom == null || chatRoom === "" || isChatRoomExist(chatRoom, chatRoomList) === false) {
+        showToast("当前聊天室不存在，已自动切换到第一个聊天室")
+        chatRoom = chatRoomList[0];
+        connectToChatRoom();
     }
 
     // 将select设置为当前chatroom的值
-    for (var i = 0; i < message.chatRoomList.length; i++) {
-        var room = message.chatRoomList[i];
+    for (var i = 0; i < chatRoomList.length; i++) {
+        var room = chatRoomList[i];
         // Create an option for each room
         var option = document.createElement('option');
         option.classList.add('select-text');
@@ -102,7 +130,7 @@ function handleRoomList(message) {
             option.classList.add("select-text-selected")
         }
     }
-    select.selectedIndex = message.chatRoomList.indexOf(chatRoom);
+    select.selectedIndex = chatRoomList.indexOf(chatRoom);
     // Add the select element to the room list
     roomList.appendChild(select);
 }
@@ -148,13 +176,8 @@ function handleMessage(message) {
         displayImageMessage(message);
     } else if (message.type === "file") {
         displayFileMessage(message);
-    }
-    else if (message.type === "text" || message.type === "") {
+    } else if (message.type === "text" || message.type === "") {
         displayNormalMessage(message);
-    } else if (message.type === "roomList") {
-        handleRoomList(message)
-    } else if (message.type === "over") {
-        messageDisplay.scrollTop = messageDisplay.scrollHeight;
     }
     if (message.userId === userId || message.userName === userName) {
         messageDisplay.scrollTop = messageDisplay.scrollHeight;
@@ -171,6 +194,7 @@ function getOkTimeText(currentDate, time) {
     }
     return time.substring(0, 16);
 }
+
 var lastTime = ""; // "2024-11-12 00:00:00"
 // 判断当前的time是否需要显示时间，如果需要则返回time，否则返回""，并更新lastTime
 function getTimeInterval(time) {
@@ -189,7 +213,6 @@ function getTimeInterval(time) {
 
     return "";
 }
-
 
 
 function insertSendTime(message) {
@@ -220,13 +243,14 @@ function initSocket() {
         // messageDisplay.scrollTop = messageDisplay.scrollHeight;
     };
     socket.onopen = function (event) {
+        console.log("socket open", event)
     };
     // 自动重连
     socket.onclose = function (event) {
         if (socket.readyState === WebSocket.CLOSED) {
             console.log("socket close")
             setTimeout(function () {
-                showToast("连接断开，尝试重新连接...", { duration: 3000 });
+                showToast("连接断开，尝试重新连接...", {duration: 3000});
                 connectToChatRoom();
             }, 5000);
         }
@@ -252,25 +276,23 @@ function createRoom() {
     });
 
 }
+
 function goLoginPage() {
     window.location.href = "/login";
 }
+
 function connectToChatRoom() {
     // Check if the userId or room number is empty
     if (userId == null || userId === "" || chatRoom == null || chatRoom === "") {
         showToast('请登录并选择聊天室后再进入');
         return;
     }
-    // Focus on the message input field
-    messageInput.focus();
-
     // clear the message display
     messageDisplay.innerHTML = "";
-    
+    // Get the chat history
     getHistoryMessages();
-    
-    // Initialize the WebSocket connection
-    initSocket();
+    // Get the room list
+    getRoomList();
 }
 
 // Function to send a message
@@ -283,7 +305,7 @@ function sendMessage() {
     // Create a message object with username and content
     const messageObj = {
         userName: userName,
-        type:"text",
+        type: "text",
         userId: userId,
         roomName: chatRoom,
         content: message,
@@ -314,7 +336,7 @@ function uploadFile(fileName, data, callback) {
                 showToast(data.message);
             } else {
                 console.log("upload file success")
-                callback(data.data.filePath,data.data.fileType)
+                callback(data.data.filePath, data.data.fileType)
             }
         })
         .catch(error => console.error('Error:', error));
@@ -375,7 +397,8 @@ function showToast(text, duration = 2000) {
         position: 'center', // Toast 水平方向的位置，可以是 "left", "center", 或 "right"
         backgroundColor: "linear-gradient(to right, #00b09b, #96c93d)", // 背景色
         className: "chat-toast", // 自定义类名，用于添加特定的样式
-        onClick: function () { } // 点击 Toast 时执行的函数
+        onClick: function () {
+        } // 点击 Toast 时执行的函数
     }).showToast();
 }
 
@@ -385,7 +408,11 @@ function sendFile() {
     if (fileInput.files.length > 0) {
         const file = fileInput.files[0]; // 获取第一个文件
         const fileName = file.name; // 获取文件名
-
+        console.log(fileName, file.size)
+        if (file.size > 1024 * 1024 * 20) {
+            showToast("文件大小不能超过20MB");
+            return;
+        }
         const reader = new FileReader();
         reader.onload = function (e) {
             // 限制文件大小
@@ -393,17 +420,17 @@ function sendFile() {
                 showToast("文件大小不能超过20MB");
                 return;
             }
-            uploadFile(fileName, e.target.result, function(filePath,fileType){
+            uploadFile(fileName, e.target.result, function (filePath, fileType) {
                 // 创建一个包含用户名、内容、图片和文件名的消息对象
-                console.log(filePath,fileType)
+                console.log("upload file", filePath, fileType)
                 const messageObj = {
-                    type:fileType,
+                    type: fileType,
                     userId: userId,
-                    content:fileName,
+                    content: fileName,
                     userName: userName,
                     roomName: chatRoom,
                 };
-                if(fileType === 'image')
+                if (fileType === 'image')
                     messageObj.image = filePath;
                 else
                     messageObj.file = filePath;
