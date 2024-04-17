@@ -1,6 +1,7 @@
 package chat_room
 
 import (
+	"context"
 	"github.com/gorilla/websocket"
 	"log/slog"
 	"sync"
@@ -11,6 +12,8 @@ import (
 const maxHistoryCount = 100
 
 type Room struct {
+	ctx  context.Context
+	stop context.CancelFunc
 	init sync.Once
 	// Registered clients.
 	clients map[*Client]bool
@@ -29,7 +32,10 @@ type Room struct {
 }
 
 func newRoom(room *chat_type.ChatRoom) *Room {
+	ctx, cancel := context.WithCancel(context.Background())
 	return &Room{
+		ctx:        ctx,
+		stop:       cancel,
 		broadcast:  make(chan chat_type.Message),
 		register:   make(chan *Client),
 		unregister: make(chan *Client),
@@ -45,7 +51,10 @@ func (h *Room) BroadCast(m chat_type.Message) {
 
 // UserJoin 将用户加入房间
 func (h *Room) UserJoin(conn *websocket.Conn, user *chat_type.User) {
+	ctx, cancel := context.WithCancel(h.ctx)
 	client := &Client{
+		ctx:  ctx,
+		stop: cancel,
 		User: user,
 		conn: conn,
 		onMessage: func(u *chat_type.User, m chat_type.Message) error {
@@ -86,6 +95,11 @@ func (h *Room) sendRoomList(c *Client) {
 func (h *Room) serve() {
 	for {
 		select {
+		case <-h.ctx.Done():
+			close(h.register)
+			close(h.unregister)
+			close(h.broadcast)
+			return
 		case client := <-h.register:
 			h.clients[client] = true
 			// h.sendHistory(client)
@@ -93,7 +107,11 @@ func (h *Room) serve() {
 		case client := <-h.unregister:
 			if _, ok := h.clients[client]; ok {
 				delete(h.clients, client)
-				close(client.send)
+				client.Stop()
+			}
+			if len(h.clients) == 0 {
+				slog.Warn("room is empty", "roomName", h.RoomName)
+				RemoveChatRoom(h.RoomName)
 			}
 		case message := <-h.broadcast:
 			h.Messages = append(h.Messages, message)
@@ -110,4 +128,12 @@ func (h *Room) Serve() {
 		slog.Info("room serve", "roomName", h.RoomName)
 		go h.serve()
 	})
+}
+
+func (h *Room) UserCount() int {
+	return len(h.clients)
+}
+
+func (h *Room) Stop() {
+	h.stop()
 }

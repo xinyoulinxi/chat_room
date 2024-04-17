@@ -1,6 +1,7 @@
 package chat_room
 
 import (
+	"context"
 	"encoding/json"
 	"github.com/gorilla/websocket"
 	"log/slog"
@@ -19,7 +20,8 @@ type onMessage func(user *chat_type.User, message chat_type.Message) error
 type onClientLeave func(client *Client)
 
 type Client struct {
-	exit bool
+	ctx  context.Context
+	stop context.CancelFunc
 	init sync.Once
 	conn *websocket.Conn
 	send chan []byte
@@ -39,6 +41,10 @@ func (c *Client) Serve() {
 	})
 }
 
+func (c *Client) Stop() {
+	c.stop()
+}
+
 func (c *Client) Send(m chat_type.Message) error {
 	slog.Info("sendMessage to client", "id", c.UserID, "userName", c.UserName, "content", m.Content, "type", m.Type, "roomName", m.RoomName, "sendTime", m.SendTime)
 	jsonMsg, err := json.Marshal([]chat_type.Message{m})
@@ -52,14 +58,11 @@ func (c *Client) Send(m chat_type.Message) error {
 
 func (c *Client) readPump() {
 	defer func() {
-		c.exit = true
+		slog.Warn("Client exit, stop read", "id", c.UserID, "userName", c.UserName)
+		c.stop()
 		c.onClientLeave(c)
 	}()
 	for {
-		if c.exit {
-			slog.Warn("Client exit, stop read", "id", c.UserID, "userName", c.UserName)
-			break
-		}
 		_, msg, err := c.conn.ReadMessage()
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
@@ -67,7 +70,7 @@ func (c *Client) readPump() {
 			} else {
 				slog.Error("Failed to read message from WebSocket", "id", c.UserID, "userName", c.UserName, "error", err)
 			}
-			break
+			return
 		}
 
 		var message chat_type.Message
@@ -91,15 +94,15 @@ func (c *Client) writePump() {
 	slog.Info("Client writePump", "id", c.UserID, "userName", c.UserName)
 	ticker := time.NewTicker(pingPeriod)
 	defer func() {
+		slog.Info("Client writePump exit", "id", c.UserID, "userName", c.UserName)
 		ticker.Stop()
 		_ = c.conn.Close()
 	}()
 	for {
-		if c.exit {
-			slog.Warn("Client exit, stop write", "id", c.UserID, "userName", c.UserName)
-			break
-		}
 		select {
+		case <-c.ctx.Done():
+			close(c.send)
+			return
 		case message, ok := <-c.send:
 			if !ok {
 				_ = c.conn.WriteMessage(websocket.CloseMessage, []byte{})
@@ -107,7 +110,12 @@ func (c *Client) writePump() {
 				return
 			}
 			if err := c.conn.WriteMessage(websocket.TextMessage, message); err != nil {
-				slog.Error("Failed to send message", "id", c.UserID, "userName", c.UserName, "message", string(message), "error", err)
+				if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+					slog.Error("Client unexpected close", "id", c.UserID, "userName", c.UserName, "error", err)
+				} else {
+					slog.Error("Failed to send message", "id", c.UserID, "userName", c.UserName, "message", string(message), "error", err)
+				}
+				return
 			}
 		case <-ticker.C:
 			if err := c.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
@@ -116,5 +124,4 @@ func (c *Client) writePump() {
 			}
 		}
 	}
-	slog.Info("Client writePump exit", "id", c.UserID, "userName", c.UserName)
 }
