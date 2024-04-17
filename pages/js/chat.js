@@ -17,9 +17,37 @@ function init() {
         }
     });
     connectToChatRoom();
+    getHistoryMessages();
 }
 
-function getInput(title,showCancelButton, callback) {
+function getHistoryMessages() {
+    fetch('/history_messages', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            userId: userId,
+            chatRoom: chatRoom
+        })
+    })
+        .then(response => response.json())
+        .then(data => {
+            console.log("get history message size",data.data.length)
+            if (data.errorCode !== 0) {
+                showToast(data.message);
+            } else {
+                data.data.forEach(message => {
+                    handleMessage(message)
+                })
+
+                messageDisplay.scrollTop = messageDisplay.scrollHeight;
+            }
+        })
+        .catch(error => console.error('Error:', error));
+}
+
+function getInput(title, showCancelButton, callback) {
     Swal.fire({
         title: title,
         input: 'text',
@@ -121,17 +149,17 @@ function handleMessage(message) {
     insertSendTime(message)
     if (message.type === "image") {
         displayImageMessage(message);
-    }else if(message.type === "file"){
+    } else if (message.type === "file") {
         displayFileMessage(message);
     }
-     else if (message.type === "text" || message.type === "") {
+    else if (message.type === "text" || message.type === "") {
         displayNormalMessage(message);
-    } else if(message.type === "roomList"){
+    } else if (message.type === "roomList") {
         handleRoomList(message)
-    }else if(message.type === "over"){
+    } else if (message.type === "over") {
         messageDisplay.scrollTop = messageDisplay.scrollHeight;
     }
-    if(message.userId === userId || message.userName === userName){
+    if (message.userId === userId || message.userName === userName) {
         messageDisplay.scrollTop = messageDisplay.scrollHeight;
     }
 }
@@ -186,14 +214,11 @@ function initSocket() {
     socket = new WebSocket('ws://' + window.location.host + '/ws?id=' + userId + '&chatroom=' + chatRoom);
     // Event listener for receiving messages from the server
     socket.onmessage = function (event) {
-        console.log("start")
         var messages = JSON.parse(event.data); // Parse the JSON data into an array
-        console.log("middle")
         messages.forEach(function (message) { // Iterate over each message in the array
             // console.log(message)
             handleMessage(message);
         });
-        console.log("end")
         // Scroll to the bottom of the message display
         // messageDisplay.scrollTop = messageDisplay.scrollHeight;
     };
@@ -204,7 +229,7 @@ function initSocket() {
         if (socket.readyState === WebSocket.CLOSED) {
             console.log("socket close")
             setTimeout(function () {
-                showToast("连接断开，尝试重新连接...",{duration:3000});
+                showToast("连接断开，尝试重新连接...", { duration: 3000 });
                 initSocket();
             }, 5000);
         }
@@ -212,11 +237,11 @@ function initSocket() {
 }
 
 function createRoom() {
-    getInput("输入需要创建的聊天室名称",true, function (roomName) {
+    getInput("输入需要创建的聊天室名称", true, function (roomName) {
         if (roomName == null || roomName === "") {
             return;
         }
-        fetch('/create_room?id='+userId+'&roomName=' + roomName)
+        fetch('/create_room?id=' + userId + '&roomName=' + roomName)
             .then(response => response.json())
             .then(data => {
                 if (data.errorCode === 0) {
@@ -230,7 +255,7 @@ function createRoom() {
     });
 
 }
-function goLoginPage(){
+function goLoginPage() {
     window.location.href = "/login";
 }
 function connectToChatRoom() {
@@ -257,7 +282,7 @@ function sendMessage() {
     const messageObj = {
         userName: userName,
         userId: userId,
-        roomName : chatRoom,
+        roomName: chatRoom,
         content: message,
         image: null
     };
@@ -314,7 +339,7 @@ function displayNormalMessage(message) {
     messageDisplay.appendChild(messageElement);
 }
 
-function showToast(text,{duration=2000}) {
+function showToast(text, duration = 2000) {
     Toastify({
         text: text,
         duration: duration, // Toast 持续显示的时间（毫秒）
@@ -344,7 +369,7 @@ function sendFile() {
             // 创建一个包含用户名、内容、图片和文件名的消息对象
             const messageObj = {
                 userId: userId,
-                userName:userName,
+                userName: userName,
                 roomName: chatRoom,
                 content: fileName,
                 image: e.target.result, // Base64-encoded image data
