@@ -7,9 +7,9 @@ import (
 	"net/http"
 	"os"
 	"strconv"
-	chat_room "web_server/chat_room"
+	"web_server/chat_room"
 	"web_server/user"
-	utils "web_server/utils"
+	"web_server/utils"
 
 	"github.com/gorilla/handlers"
 	// "github.com/gorilla/handlers"

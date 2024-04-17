@@ -81,8 +81,8 @@ func saveFile(message *chat_type.Message) error {
 }
 
 func TryTransferImagePathToMessage(message *chat_type.Message) {
-	slog.Info("TryTransferImagePathToMessage")
 	if message.Image != "" {
+		slog.Info("TransferImagePathToMessage")
 		message.Type = "image"
 		slog.Info("start to decode image data")
 		fragments := strings.Split(message.Image, ",")

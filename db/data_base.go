@@ -8,6 +8,7 @@ import (
 	"web_server/utils"
 )
 
+// SaveRoomNameListToFile 将聊天室列表保存到本地文件
 func SaveRoomNameListToFile(chatRoomList []string) {
 	jsonData, err := json.Marshal(chatRoomList)
 	if err != nil {
@@ -19,9 +20,10 @@ func SaveRoomNameListToFile(chatRoomList []string) {
 		slog.Error("Failed to write room list file", "error", err)
 		return
 	}
-	slog.Info("Room list saved to file")
+	slog.Info("ChatRoom list saved to file")
 }
 
+// LoadRoomNameListFromFile 从本地文件中读取聊天室列表
 func LoadRoomNameListFromFile() []string {
 	data, err := os.ReadFile(utils.RoomListPath)
 	var roomList []string
@@ -37,6 +39,7 @@ func LoadRoomNameListFromFile() []string {
 	return roomList
 }
 
+// initDefaultChatRoom 初始化默认聊天室
 func initDefaultChatRoom(chatName string) chat_type.ChatRoom {
 	chatRoom := chat_type.ChatRoom{RoomName: chatName}
 	chatRoom.Messages = make([]chat_type.Message, 0)
@@ -44,6 +47,7 @@ func initDefaultChatRoom(chatName string) chat_type.ChatRoom {
 	return chatRoom
 }
 
+// LoadChatRoomFromLocalFile 从本地文件中读取聊天室信息
 func LoadChatRoomFromLocalFile(chatName string) chat_type.ChatRoom {
 	// Load chat room from a file or new a empty chat room
 	data, err := os.ReadFile(utils.GetChatRoomFilePath(chatName))
@@ -57,11 +61,10 @@ func LoadChatRoomFromLocalFile(chatName string) chat_type.ChatRoom {
 		slog.Error("Failed to unmarshal messages", "error", err)
 		return initDefaultChatRoom(chatName)
 	}
-	chatRoom := chat_type.ChatRoom{RoomName: chatName}
-	chatRoom.Messages = messages
-	return chatRoom
+	return chat_type.ChatRoom{RoomName: chatName, Messages: messages}
 }
 
+// WriteChatInfoToLocalFile 将聊天室信息保存到本地文件
 func WriteChatInfoToLocalFile(chatRoom *chat_type.ChatRoom) error {
 	// Save messages to a file
 	jsonData, err := json.Marshal(chatRoom.Messages)

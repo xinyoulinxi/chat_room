@@ -1,12 +1,8 @@
 package chat_type
 
-import "github.com/gorilla/websocket"
-
 type ChatRoom struct {
-	RoomName    string
-	Connections []*websocket.Conn
-	Messages    []Message
-	Users       []string
+	RoomName string
+	Messages []Message
 }
 
 type Message struct {

@@ -9,7 +9,7 @@ import (
 
 func main() {
 	utils.InitEnv()
-	chat_room.InitChatRoom()
+	chat_room.InitChatRoomHub()
 	user.InitUserInfos()
 	page_handler.StartWebServer()
 }
