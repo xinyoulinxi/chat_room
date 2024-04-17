@@ -78,13 +78,15 @@ func StartWebServer() {
 	mux.Handle("/page_1", utils.NormalCacheMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "pages/page_1.html")
 	})))
-	// login
+	// login page
 	mux.Handle("/login", utils.NormalCacheMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		slog.Info("route page to login")
 		http.ServeFile(w, r, "pages/login.html")
 	})))
 	// login
 	mux.HandleFunc("/login_user", user.LoginHandler)
+	// upload file
+	mux.HandleFunc("/upload_file", chat_room.UploadFilehandler)
 
 	// history_messages
 	mux.HandleFunc("/history_messages", chat_room.HistoryMessagesHandler)
