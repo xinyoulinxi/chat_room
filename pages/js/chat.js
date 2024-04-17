@@ -16,6 +16,8 @@ function init() {
             sendMessage();
         }
     });
+    // Focus on the message input field
+    messageInput.focus();
     connectToChatRoom();
 }
 
@@ -39,8 +41,9 @@ function getHistoryMessages() {
                 data.data.forEach(message => {
                     handleMessage(message)
                 })
-
                 messageDisplay.scrollTop = messageDisplay.scrollHeight;
+                // Initialize the WebSocket connection
+                initSocket();
             }
         })
         .catch(error => console.error('Error:', error));
@@ -74,7 +77,31 @@ function getInput(title, showCancelButton, callback) {
     });
 }
 
-function handleRoomList(message) {
+function getRoomList() {
+    fetch('/room_list?id=' + userId)
+        .then(response => response.json())
+        .then(data => {
+            if (data.errorCode !== 0) {
+                showToast(data.message);
+            } else {
+                handleRoomList(data.data)
+            }
+        });
+}
+
+function isChatRoomExist(roomName, roomList) {
+    for (var i = 0; i < roomList.length; i++) {
+        if (roomList[i] === roomName)
+            return true;
+    }
+    return false;
+}
+
+function handleRoomList(chatRoomList) {
+    if (chatRoomList == null || chatRoomList.length === 0) {
+        showToast("当前没有聊天室，请先创建一个")
+        return;
+    }
     var roomList = document.getElementById('roomList');
     roomList.innerHTML = ""; // Clear the room list
     var select = roomList.querySelector('select') || document.createElement('select');
@@ -84,13 +111,15 @@ function handleRoomList(message) {
         chatRoom = this.value;
         connectToChatRoom();
     };
-    if (chatRoom == null || chatRoom === "") {
-        chatRoom = message.chatRoomList[0];
+    if (chatRoom == null || chatRoom === "" || isChatRoomExist(chatRoom, chatRoomList) === false) {
+        showToast("当前聊天室不存在，已自动切换到第一个聊天室")
+        chatRoom = chatRoomList[0];
+        connectToChatRoom();
     }
 
     // 将select设置为当前chatroom的值
-    for (var i = 0; i < message.chatRoomList.length; i++) {
-        var room = message.chatRoomList[i];
+    for (var i = 0; i < chatRoomList.length; i++) {
+        var room = chatRoomList[i];
         // Create an option for each room
         var option = document.createElement('option');
         option.classList.add('select-text');
@@ -102,7 +131,7 @@ function handleRoomList(message) {
             option.classList.add("select-text-selected")
         }
     }
-    select.selectedIndex = message.chatRoomList.indexOf(chatRoom);
+    select.selectedIndex = chatRoomList.indexOf(chatRoom);
     // Add the select element to the room list
     roomList.appendChild(select);
 }
@@ -151,8 +180,6 @@ function handleMessage(message) {
     }
     else if (message.type === "text" || message.type === "") {
         displayNormalMessage(message);
-    } else if (message.type === "roomList") {
-        handleRoomList(message)
     } else if (message.type === "over") {
         messageDisplay.scrollTop = messageDisplay.scrollHeight;
     }
@@ -220,6 +247,7 @@ function initSocket() {
         // messageDisplay.scrollTop = messageDisplay.scrollHeight;
     };
     socket.onopen = function (event) {
+        console.log("socket open", event)
     };
     // 自动重连
     socket.onclose = function (event) {
@@ -261,16 +289,12 @@ function connectToChatRoom() {
         showToast('请登录并选择聊天室后再进入');
         return;
     }
-    // Focus on the message input field
-    messageInput.focus();
-
     // clear the message display
     messageDisplay.innerHTML = "";
-    
+    // Get the chat history
     getHistoryMessages();
-    
-    // Initialize the WebSocket connection
-    initSocket();
+    // Get the room list
+    getRoomList();
 }
 
 // Function to send a message
@@ -385,7 +409,11 @@ function sendFile() {
     if (fileInput.files.length > 0) {
         const file = fileInput.files[0]; // 获取第一个文件
         const fileName = file.name; // 获取文件名
-
+        console.log(fileName, file.size)
+        if (file.size > 1024 * 1024 * 20) {
+            showToast("文件大小不能超过20MB");
+            return;
+        }
         const reader = new FileReader();
         reader.onload = function (e) {
             // 限制文件大小
@@ -395,7 +423,7 @@ function sendFile() {
             }
             uploadFile(fileName, e.target.result, function(filePath,fileType){
                 // 创建一个包含用户名、内容、图片和文件名的消息对象
-                console.log(filePath,fileType)
+                console.log("upload file", filePath, fileType)
                 const messageObj = {
                     type:fileType,
                     userId: userId,
