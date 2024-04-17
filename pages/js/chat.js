@@ -1,4 +1,3 @@
-
 // Establish a WebSocket connection
 var params = new URLSearchParams(window.location.search);
 var userId = params.get("userid")
@@ -9,6 +8,7 @@ var messageDisplay = document.getElementById('messageDisplay'); // 全局缓存
 var messageInput = document.getElementById('messageInput'); // 全局缓存
 
 init()
+
 function init() {
     messageInput.addEventListener('keydown', function (event) {
         if (!event.isComposing && event.key === 'Enter') {
@@ -37,7 +37,7 @@ function getHistoryMessages() {
             if (data.errorCode !== 0) {
                 showToast(data.message);
             } else {
-                console.log("get history message size",data.data.length)
+                console.log("get history message size", data.data.length)
                 data.data.forEach(message => {
                     handleMessage(message)
                 })
@@ -56,14 +56,13 @@ function getInput(title, showCancelButton, callback) {
         inputAttributes: {
             autocapitalize: 'off'
         },
-        showCancelButton: true,
         confirmButtonText: '确认',
         cancelButtonText: '取消',
         showCancelButton: showCancelButton,
         showLoaderOnConfirm: true,
         preConfirm: (login) => {
             // 可以在这里处理输入的数据，如发送到服务器
-            if (login == null || login == "") {
+            if (login == null || login === "") {
                 showToast("用户名不能为空，请重新输入");
                 return false;
             }
@@ -177,11 +176,8 @@ function handleMessage(message) {
         displayImageMessage(message);
     } else if (message.type === "file") {
         displayFileMessage(message);
-    }
-    else if (message.type === "text" || message.type === "") {
+    } else if (message.type === "text" || message.type === "") {
         displayNormalMessage(message);
-    } else if (message.type === "over") {
-        messageDisplay.scrollTop = messageDisplay.scrollHeight;
     }
     if (message.userId === userId || message.userName === userName) {
         messageDisplay.scrollTop = messageDisplay.scrollHeight;
@@ -198,6 +194,7 @@ function getOkTimeText(currentDate, time) {
     }
     return time.substring(0, 16);
 }
+
 var lastTime = ""; // "2024-11-12 00:00:00"
 // 判断当前的time是否需要显示时间，如果需要则返回time，否则返回""，并更新lastTime
 function getTimeInterval(time) {
@@ -216,7 +213,6 @@ function getTimeInterval(time) {
 
     return "";
 }
-
 
 
 function insertSendTime(message) {
@@ -254,7 +250,7 @@ function initSocket() {
         if (socket.readyState === WebSocket.CLOSED) {
             console.log("socket close")
             setTimeout(function () {
-                showToast("连接断开，尝试重新连接...", { duration: 3000 });
+                showToast("连接断开，尝试重新连接...", {duration: 3000});
                 connectToChatRoom();
             }, 5000);
         }
@@ -280,9 +276,11 @@ function createRoom() {
     });
 
 }
+
 function goLoginPage() {
     window.location.href = "/login";
 }
+
 function connectToChatRoom() {
     // Check if the userId or room number is empty
     if (userId == null || userId === "" || chatRoom == null || chatRoom === "") {
@@ -307,7 +305,7 @@ function sendMessage() {
     // Create a message object with username and content
     const messageObj = {
         userName: userName,
-        type:"text",
+        type: "text",
         userId: userId,
         roomName: chatRoom,
         content: message,
@@ -338,7 +336,7 @@ function uploadFile(fileName, data, callback) {
                 showToast(data.message);
             } else {
                 console.log("upload file success")
-                callback(data.data.filePath,data.data.fileType)
+                callback(data.data.filePath, data.data.fileType)
             }
         })
         .catch(error => console.error('Error:', error));
@@ -399,7 +397,8 @@ function showToast(text, duration = 2000) {
         position: 'center', // Toast 水平方向的位置，可以是 "left", "center", 或 "right"
         backgroundColor: "linear-gradient(to right, #00b09b, #96c93d)", // 背景色
         className: "chat-toast", // 自定义类名，用于添加特定的样式
-        onClick: function () { } // 点击 Toast 时执行的函数
+        onClick: function () {
+        } // 点击 Toast 时执行的函数
     }).showToast();
 }
 
@@ -421,17 +420,17 @@ function sendFile() {
                 showToast("文件大小不能超过20MB");
                 return;
             }
-            uploadFile(fileName, e.target.result, function(filePath,fileType){
+            uploadFile(fileName, e.target.result, function (filePath, fileType) {
                 // 创建一个包含用户名、内容、图片和文件名的消息对象
                 console.log("upload file", filePath, fileType)
                 const messageObj = {
-                    type:fileType,
+                    type: fileType,
                     userId: userId,
-                    content:fileName,
+                    content: fileName,
                     userName: userName,
                     roomName: chatRoom,
                 };
-                if(fileType === 'image')
+                if (fileType === 'image')
                     messageObj.image = filePath;
                 else
                     messageObj.file = filePath;
