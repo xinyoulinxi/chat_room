@@ -8,13 +8,10 @@ import (
 )
 
 const (
-	DataPath     = "data/"
-	ChatRoomPath = "data/chatroom/"
-	FileDir      = "data/files/"
-	ImageDir     = "data/images/"
-	RoomListPath = "data/room_list.json"
-	UserListPath = "data/user.json"
-	defaultPort  = "80"
+	DataPath    = "data/"
+	FileDir     = "data/files/"
+	ImageDir    = "data/images/"
+	defaultPort = "80"
 )
 
 type (
@@ -52,15 +49,9 @@ func GetLocalIP() string {
 }
 
 func InitEnv() {
-	dirs := []string{DataPath, FileDir, ImageDir, ChatRoomPath}
+	dirs := []string{FileDir, ImageDir}
 	for _, dir := range dirs {
 		if err := EnsureDir(dir); err != nil {
-			panic(err)
-		}
-	}
-	files := []string{RoomListPath, UserListPath}
-	for _, file := range files {
-		if err := EnsureFileExist(file); err != nil {
 			panic(err)
 		}
 	}

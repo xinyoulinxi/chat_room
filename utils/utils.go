@@ -13,13 +13,6 @@ import (
 	"github.com/h2non/filetype"
 )
 
-func GetChatRoomFilePath(chatName string) string {
-	if chatName == "" {
-		return ChatRoomPath + "chatroom.json"
-	}
-	return ChatRoomPath + "chatroom_" + chatName + ".json"
-}
-
 func GetCurTime() string {
 	return time.Now().Format(time.DateTime)
 }
@@ -111,7 +104,6 @@ func TryTransferImagePathToMessage(message *chat_type.Message) {
 		message.Type = "text"
 	}
 }
-
 
 // noCacheMiddleware 为响应添加缓存控制头
 func NoCacheMiddleware(next http.Handler) http.Handler {
