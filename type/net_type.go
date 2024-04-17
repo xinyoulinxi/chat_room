@@ -1,8 +1,11 @@
 package chat_type
 
+import "encoding/json"
+
 type ReturnMessage struct {
-	ErrorCode int    `json:"errorCode"`
-	Message   string `json:"message"`
+	ErrorCode int             `json:"errorCode"`
+	Message   string          `json:"message"`
+	Data      json.RawMessage `json:"data"`
 }
 
 const (
