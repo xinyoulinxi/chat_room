@@ -65,12 +65,9 @@ func updateUserInfosFromLocalFile() {
 func GetUserAvatarHandler(w http.ResponseWriter, r *http.Request) {
 	username := r.URL.Query().Get("userName")
 	// 根据name获取用户
-	u := getUserByName(username)
-	slog.Info("GetUserAvatarHandler", "name", username, userList)
-	if u == nil {
-		slog.Error("GetUserAvatarHandler", "error", "Invalid user name", "username", username)
-		utils.WriteResponse(w, chat_type.ErrorInvalidInput, "Invalid user name")
-		return
+	u := &chat_type.User{}
+	if getUserByName(username) != nil {
+		u = getUserByName(username)
 	}
 	avatar := u.Avatar
 	if avatar == "" {
