@@ -2,16 +2,12 @@ package utils
 
 import (
 	"encoding/base64"
+	"github.com/h2non/filetype"
 	"log/slog"
-	"net/http"
-	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
-	chat_type "web_server/type"
-
-	"github.com/h2non/filetype"
 )
 
 func GetCurTime() string {
@@ -72,55 +68,7 @@ func SaveFile(name string, fileData *string) (string, string, error) {
 	return filename, fileType, nil
 }
 
-func TryTransferImagePathToMessage(message *chat_type.Message) {
-	if message.Type == "image" || message.Type == "file" {
-		return
-	}
-	slog.Info("TryTransferImagePathToMessage")
-	if message.Image != "" {
-		message.Type = "image"
-		slog.Info("start to decode image data")
-		fragments := strings.Split(message.Image, ",")
-		if len(fragments) > 1 {
-			filePath, fileType, err := SaveFile(message.Content, &fragments[1])
-			if err != nil {
-				slog.Error("Failed to save file", "error", err)
-				return
-			}
-			if fileType == "image" {
-				message.Image = filePath
-			} else {
-				message.File = filePath
-			}
-			message.Type = fileType
-		} else {
-			u, err := url.Parse(fragments[0])
-			if err != nil {
-				slog.Error("Failed to parse image url", "error", err)
-				return
-			}
-			message.Image = u.String()
-		}
-	} else {
-		message.Type = "text"
-	}
-}
-
-// noCacheMiddleware 为响应添加缓存控制头
-func NoCacheMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate") // HTTP 1.1.
-		w.Header().Set("Pragma", "no-cache")                                   // HTTP 1.0.
-		w.Header().Set("Expires", "0")                                         // Proxies.
-		next.ServeHTTP(w, r)
-	})
-}
-func NormalCacheMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Cache-Control", "Cache-Control: public, max-age=31536000") // HTTP 1.1.
-		next.ServeHTTP(w, r)
-	})
-}
+// EnsureDir 确保目录存在
 func EnsureDir(dirName string) error {
 	_, err := os.Stat(dirName)
 	if os.IsNotExist(err) {
@@ -133,6 +81,7 @@ func EnsureDir(dirName string) error {
 	return nil
 }
 
+// EnsureFileExist 确保文件存在
 func EnsureFileExist(filePath string) error {
 	_, err := os.Stat(filePath)
 	if os.IsNotExist(err) {

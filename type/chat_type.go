@@ -32,7 +32,6 @@ func (m *Messages) Deserialize(bytes []byte) error {
 }
 
 type Message struct {
-	// MessageType string `json:"type"`
 	MsgID     string          `json:"id"`
 	Type      string          `json:"type"` // text  image  roomList file over
 	UserName  string          `json:"userName"`

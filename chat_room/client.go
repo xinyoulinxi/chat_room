@@ -12,8 +12,7 @@ import (
 )
 
 const (
-	pingPeriod     = 60 * time.Second
-	imageSizeLimit = 1024 * 1024 * 20
+	pingPeriod = 60 * time.Second
 )
 
 type onMessage func(user *chat_type.User, message chat_type.Message) error
@@ -52,7 +51,11 @@ func (c *Client) Send(m chat_type.Message) error {
 		slog.Error("Failed to convert m to JSON", "error", err)
 		return err
 	}
-	c.send <- jsonMsg
+	if c.send == nil {
+		return nil
+	} else {
+		c.send <- jsonMsg
+	}
 	return nil
 }
 
@@ -102,6 +105,7 @@ func (c *Client) writePump() {
 		select {
 		case <-c.ctx.Done():
 			close(c.send)
+			c.send = nil
 			return
 		case message, ok := <-c.send:
 			if !ok {

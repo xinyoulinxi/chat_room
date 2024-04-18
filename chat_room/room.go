@@ -98,8 +98,8 @@ func (h *Room) sendRoomList(c *Client) {
 }
 
 func (h *Room) broadRoomUserCountMessage(count int) {
-	if count < 0 {
-		count = 0
+	if count <= 0 {
+		return
 	}
 	slog.Info("broadcast room user count", "roomName", h.RoomName)
 	type RoomCount struct {
@@ -139,10 +139,10 @@ func (h *Room) serve() {
 				delete(h.clients, client)
 				client.Stop()
 			}
-			//if len(h.clients) == 0 {
-			//	slog.Warn("room is empty", "roomName", h.RoomName)
-			//	RemoveChatRoom(h.RoomName)
-			//}
+			if len(h.clients) == 0 {
+				slog.Warn("room is empty", "roomName", h.RoomName)
+				RemoveChatRoom(h.RoomName)
+			}
 		case message := <-h.broadcast:
 			switch message.Type {
 			case "text", "image", "file":
