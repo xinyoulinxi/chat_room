@@ -50,8 +50,9 @@
 .user-name {
     display: inline-block;
     max-width: 300px;
-    margin: 10px;
-    font-size: 18px;
+    margin-left: 10px;
+    margin-right: 10px;
+    font-size: 16px;
     color: gray;
 }
 
@@ -71,24 +72,28 @@
 .message-download{
     color: gray;
     font-size: 16px;
-    margin-left: 10px;
-    margin-right: 10px;
     display: flex;
 }
 
 .message-download-me{
+    margin-right: 72px;
     align-self: flex-end;
 }
 
 .message-download-other{
+    margin-left: 72px;
     align-self: flex-start;
 }
 
 .other-message {
     background-color: white;
+}
+.my-message-container{
+    align-self: flex-end;
+}
+.other-message-container{
     align-self: flex-start;
 }
-
 .file-upload {
     display: flex;
     position: relative;
@@ -248,4 +253,21 @@
     color: green;
     font-size: 16px;
     min-width: 240px;
+}
+
+.message-container {
+    display: flex;
+    align-items: flex-start; /* 使内容顶部对齐 */
+}
+
+.avatar {
+    width: 50px;  /* 头像宽度 */
+    height: 50px; /* 头像高度 */
+    margin-right: 10px; /* 头像和文本之间的间距 */
+    border-radius: 50%; /* 头像为圆形 */
+}
+
+.text-container {
+    display: flex;
+    flex-direction: column;
 }

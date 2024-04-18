@@ -94,6 +94,12 @@ func StartWebServer() {
 	// register
 	mux.HandleFunc("/register_user", user.RegisterHandler)
 
+	// get avatar
+	mux.HandleFunc("/get_avatar", user.GetUserAvatarHandler)
+
+	// update avatar
+	mux.HandleFunc("/update_avatar", user.UpdateUserAvatarHandler)
+
 	// Chat Room
 	mux.Handle("/chat_room", utils.NormalCacheMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		slog.Info("route page to chat_room")

@@ -141,49 +141,135 @@ function closeSocket() {
     }
 }
 
-function displayFileMessage(message) {
-    const fileElement = document.createElement('a');
+function getAvatarUrl(userName, avatarElement) {
+    fetch('/get_avatar?userName=' + userName)
+        .then(response => response.json())
+        .then(data => {
+            if (data.errorCode === 0) {
+                avatarElement.src = data.data
+            }
+        });
+}
+
+function updateAvatar() {
+    getInput("输入头像地址", true, function (avatarUrl) {
+        if (avatarUrl == null || avatarUrl === "") {
+            return;
+        }
+        fetch('/update_avatar?id=' + userId + '&url=' + avatarUrl)
+            .then(response => response.json())
+            .then(data => {
+                if (data.errorCode === 0) {
+                    showToast("头像设置成功");
+                    document.getElementById("avatar").src = avatarUrl
+                } else {
+                    showToast(data.message);
+                }
+            });
+    });
+}
+
+function displayProfileElement(message, element) {
+    // 创建最外层容器
+    const container = document.createElement('div');
+    container.classList.add('message-container');
+
+    // 创建并设置图片元素
+    const avatar = document.createElement('img');
+    avatar.src = "data/images/000cad3bbec54d5d1315dfbb03692224.webp" // message.avatarUrl;
+    avatar.alt = 'Avatar';
+    avatar.className = 'avatar';
+    getAvatarUrl(message.userName, avatar)
+    avatar.onclick = function () {
+        if(message.userId === userId || message.userName === userName) {
+            updateAvatar()
+        }else{
+            showBigImage(this.src)
+        }
+    }
+    // 创建文本容器
+    const textContainer = document.createElement('div');
+    textContainer.className = 'text-container';
+
+    // 创建并设置名字元素
+    const nameDiv = document.createElement('div');
+    nameDiv.className = 'user-name';
+    nameDiv.textContent = message.userName;
+
+    // 创建并设置内容元素
+    const contentDiv = document.createElement('div');
+    element.classList.add('message-bubble')
+    var isSelf = message.userId === userId || message.userName === userName
+    if (isSelf) {
+        container.classList.add("my-message-container")
+        container.align = "right"
+        element.classList.add('my-message')
+    } else {
+        // container.align = "left"
+        container.classList.add("other-message-container")
+        element.classList.add('other-message')
+    }
+    contentDiv.textContent = message.content;
+
+    if (!isSelf) {
+        container.appendChild(avatar);
+    }
+    textContainer.appendChild(nameDiv);
+    textContainer.appendChild(element);
+    // 将文本容器加入到最外层容器中
+    container.appendChild(textContainer);
+    if (isSelf) {
+        container.appendChild(avatar);
+    }
+    messageDisplay.appendChild(container)
+}
+function displayDownloadElement(message) {
     const downLoadElement = document.createElement('a');
-    // 让文件在新窗口打开
-    fileElement.target = "_blank";
-    // 点击downLoadElement下载文件
     downLoadElement.download = message.content;
     downLoadElement.href = message.file;
     downLoadElement.textContent = "[下载]";
     downLoadElement.classList.add('message-download');
+    if (message.userName === userName || message.userId === userId) {
+        downLoadElement.classList.add('message-download-me');
+    }else{
+        downLoadElement.classList.add('message-download-other');
+    }
+    messageDisplay.appendChild(downLoadElement)
+}
+
+function getFileMessageElement(message) {
+    const fileElement = document.createElement('a');
+    // 让文件在新窗口打开
+    fileElement.target = "_blank";
+    // 点击downLoadElement下载文件
     fileElement.href = message.file; // Set src to the image field of the message
     fileElement.textContent = message.content;
     fileElement.classList.add('message-bubble');
     fileElement.classList.add('message-bubble-text');
-    if (message.userName === userName || message.userId === userId) {
-        downLoadElement.classList.add('message-download-me');
-        fileElement.classList.add('my-message');
-    } else {
-        downLoadElement.classList.add('message-download-other');
-        const userName = document.createElement('div');
-        userName.className = 'user-name';
-        userName.textContent = message.userName;
-        messageDisplay.appendChild(userName);
-        fileElement.classList.add('other-message');
+    return fileElement
+}
+
+function displayMessage(message) {
+    insertSendTime(message)
+    if (message.type === "image") {
+        displayProfileElement(message, getImageMessageElement(message))
+    } else if (message.type === "file") {
+        displayProfileElement(message,getFileMessageElement(message))
+        displayDownloadElement(message)
+    } else if (message.type === "text" || message.type === "") {
+        displayProfileElement(message, getNormalMessage(message))
     }
-    messageDisplay.appendChild(fileElement);
-    messageDisplay.appendChild(downLoadElement);
 }
 
 function handleMessage(message) {
-    insertSendTime(message)
     console.log("handleMessage", message)
-    if (message.type === "image") {
-        displayImageMessage(message);
-    } else if (message.type === "file") {
-        displayFileMessage(message);
-    } else if (message.type === "text" || message.type === "") {
-        displayNormalMessage(message);
-    }else if(message.type === "userCount"){
-        console.log("userCount",message.data)
-        document.getElementById("userCount").textContent = "在线用户数："+message.data.UserCount
-    }else if(message.type === "roomList"){
-        console.log("roomList",message.data)
+    if (message.type === "text" || message.type === "image" || message.type === "file") {
+        displayMessage(message)
+    } else if (message.type === "userCount") {
+        console.log("userCount", message.data)
+        document.getElementById("userCount").textContent = "在线用户数：" + message.data.UserCount
+    } else if (message.type === "roomList") {
+        console.log("roomList", message.data)
         handleRoomList(message.chatRoomList)
     }
     if (message.userId === userId || message.userName === userName) {
@@ -304,6 +390,7 @@ function connectToChatRoom() {
     // Check if the userId or room number is empty
     if (userId == null || userId === "" || chatRoom == null || chatRoom === "") {
         showToast('请登录并选择聊天室后再进入');
+        goLoginPage()
         return;
     }
     // clear the message display
@@ -361,7 +448,7 @@ function uploadFile(fileName, data, callback) {
         .catch(error => console.error('Error:', error));
 }
 
-function displayImageMessage(message) {
+function getImageMessageElement(message) {
     const imageElement = document.createElement('img');
     imageElement.src = message.image; // Set src to the image field of the message
     imageElement.dataset.retry = 0
@@ -382,48 +469,28 @@ function displayImageMessage(message) {
     imageElement.onload = function (e) {
         scrollToBottom(500)
     }
-    if (message.userId === userId || message.userName === userName) {
-        imageElement.classList.add('my-message');
-    } else {
-        const userName = document.createElement('div');
-        userName.className = 'user-name';
-        userName.textContent = message.userName;
-        messageDisplay.appendChild(userName);
-        imageElement.classList.add('other-message');
-    }
-    messageDisplay.appendChild(imageElement);
     $(document).ready(function () {
         // Your code here
         imageElement.addEventListener('click', function () {
-            $.fancybox.open({
-                src: this.src,
-                type: 'image'
-            });
+            showBigImage(this.src)
         });
+    });
+    return imageElement
+}
+function showBigImage(src) {
+    $.fancybox.open({
+        src: src,
+        type: 'image'
     });
 }
 
 // Function to display a message
-function displayNormalMessage(message) {
+function getNormalMessage(message) {
     const messageElement = document.createElement('div');
-    // messageElement.textContent = message.content; // Add username before message
     const messageText = document.createElement('pre');
     messageText.textContent = message.content
     messageElement.appendChild(messageText)
-
-    messageElement.classList.add('message-bubble');
-    if (message.userId === userId || message.userName === userName) {
-        messageElement.classList.add('my-message');
-        messageElement.align = "right"
-    } else {
-        const userName = document.createElement('div');
-        userName.className = 'user-name';
-        userName.textContent = message.userName;
-        userName.align = "left"
-        messageDisplay.appendChild(userName);
-        messageElement.classList.add('other-message');
-    }
-    messageDisplay.appendChild(messageElement);
+    return messageElement
 }
 
 function showToast(text, duration = 2000) {

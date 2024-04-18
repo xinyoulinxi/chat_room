@@ -9,8 +9,8 @@ import (
 	"web_server/utils"
 )
 
-var userList = make([]chat_type.User, 0)
-var userMap = make(map[string]chat_type.User)
+var userList = make([]*chat_type.User, 0)
+var userMap = make(map[string]*chat_type.User)
 
 func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	// 确保关闭请求体
@@ -62,6 +62,50 @@ func updateUserInfosFromLocalFile() {
 	}
 }
 
+func GetUserAvatarHandler(w http.ResponseWriter, r *http.Request) {
+	username := r.URL.Query().Get("userName")
+	// 根据id获取用户
+	u := getUserByName(username)
+	if u == nil {
+		utils.WriteResponse(w, chat_type.ErrorInvalidInput, "Invalid user name")
+		return
+	}
+	avatar := u.Avatar
+	if avatar == "" {
+		avatar = "https://img2.imgtp.com/2024/04/18/lvqx8ytl.png"
+	}
+	slog.Info("GetUserAvatarHandler", "name", username, "avatar", avatar)
+	// 转换成json
+	jsonData, err := json.Marshal(avatar)
+	if err != nil {
+		slog.Error("json marshal error", "error", err)
+		return
+	}
+	utils.WriteResponseWithData(w, chat_type.ErrorCodeSuccess, "success", jsonData)
+}
+
+// todo(ylvoid): 上传头像
+func UpdateUserAvatarHandler(w http.ResponseWriter, r *http.Request) {
+	id := r.URL.Query().Get("id")
+	avatarUrl := r.URL.Query().Get("url")
+	slog.Info("UpdateUserAvatarHandler", "id", id, "avatarUrl", avatarUrl)
+	// 根据id获取用户
+	u := GetUserById(id)
+	if u == nil {
+		utils.WriteResponse(w, chat_type.ErrorInvalidInput, "Invalid id")
+		return
+	}
+	if avatarUrl == "" {
+		utils.WriteResponse(w, chat_type.ErrorInvalidInput, "Invalid avatar url")
+		return
+	}
+	slog.Info("UpdateUserAvatarHandler success", "id", id, "avatarUrl", avatarUrl)
+	u.Avatar = avatarUrl
+	slog.Info("UpdateUserAvatarHandler", "user", u, "userlist", userList)
+	saveUserInfosToLocalFile()
+	utils.WriteResponse(w, chat_type.ErrorCodeSuccess, "success")
+}
+
 func saveUserInfosToLocalFile() {
 	err := chat_db.WriteUsersToLocalFile(userList)
 	if err != nil {
@@ -71,7 +115,7 @@ func saveUserInfosToLocalFile() {
 func getUserByName(userName string) *chat_type.User {
 	for _, user := range userList {
 		if user.UserName == userName {
-			return &user
+			return user
 		}
 	}
 	return nil
@@ -172,15 +216,17 @@ func addUser(userName string, passWord string) *chat_type.User {
 	userId := createUserId()
 	slog.Info("addUser", "userName", userName, "passWord", passWord, "userId", userId)
 	user := chat_type.User{UserID: userId, UserName: userName, PassWord: passWord}
-	userList = append(userList, user)
-	userMap[user.UserID] = user
+	userList = append(userList, &user)
+	userMap[user.UserID] = &user
 	saveUserInfosToLocalFile()
 	return &user
 }
 
 func GetUserById(id string) *chat_type.User {
-	if user, ok := userMap[id]; ok {
-		return &user
+	for _, user := range userList {
+		if id == user.UserID {
+			return user
+		}
 	}
 	return nil
 }
