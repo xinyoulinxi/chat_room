@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 	chat_type "web_server/type"
@@ -135,6 +136,9 @@ func EnsureDir(dirName string) error {
 func EnsureFileExist(filePath string) error {
 	_, err := os.Stat(filePath)
 	if os.IsNotExist(err) {
+		if err = EnsureDir(filepath.Dir(filePath)); err != nil {
+			return err
+		}
 		err = os.WriteFile(filePath, []byte{}, 0644)
 		if err != nil {
 			slog.Error("check file failed", "file", filePath, "error", err)
