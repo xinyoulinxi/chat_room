@@ -65,14 +65,16 @@ func (h *Room) UserJoin(conn *websocket.Conn, user *chat_type.User) {
 		send: make(chan []byte),
 		onClientLeave: func(c *Client) {
 			slog.Info("user leave", "id", c.UserID, "userName", c.UserName, "roomName", h.RoomName)
+			count := len(h.clients)
 			h.unregister <- c
-			h.broadRoomUserCountMessage()
+			h.broadRoomUserCountMessage(count - 1)
 		},
 	}
 	client.Serve()
 	slog.Info("new user join", "id", user.UserID, "userName", user.UserName, "roomName", h.RoomName)
+	count := len(h.clients)
 	h.register <- client
-	h.broadRoomUserCountMessage()
+	h.broadRoomUserCountMessage(count + 1)
 }
 
 // sendHistory 发送历史消息
@@ -95,16 +97,17 @@ func (h *Room) sendRoomList(c *Client) {
 	_ = c.Send(chat_type.Message{Type: "roomList", ChatRoomList: ListChatRoom()})
 }
 
-func (h *Room) broadRoomUserCountMessage() {
+func (h *Room) broadRoomUserCountMessage(count int) {
+	if count < 0 {
+		count = 0
+	}
 	slog.Info("broadcast room user count", "roomName", h.RoomName)
-	// 筛选出房间内所有用户，注册的和没注册的分开
-	userCount := len(h.clients)
 	type RoomCount struct {
 		UserCount int
 		RoomName  string
 	}
 	roomCount := RoomCount{
-		UserCount: userCount,
+		UserCount: count,
 		RoomName:  h.RoomName,
 	}
 	// 转换成json
@@ -113,8 +116,8 @@ func (h *Room) broadRoomUserCountMessage() {
 		slog.Error("json marshal error", "error", err)
 		return
 	}
-	slog.Info("broadcast room user count end", "roomName", h.RoomName, "userCount", userCount)
-	if userCount <= 0 {
+	slog.Info("broadcast room user count end", "roomName", h.RoomName, "userCount", count)
+	if count <= 0 {
 		return
 	}
 	h.BroadCast(chat_type.Message{Type: "userCount", Data: jsonData})
@@ -130,7 +133,7 @@ func (h *Room) serve() {
 			return
 		case client := <-h.register:
 			h.clients[client] = true
-			slog.Info("new user register", "id", client.UserID, "userName", client.UserName, "roomName", h.RoomName)
+			slog.Info("new user register", "id", client.UserID, "userName", client.UserName, "roomName", h.RoomName, "clientCount", len(h.clients))
 		case client := <-h.unregister:
 			if _, ok := h.clients[client]; ok {
 				delete(h.clients, client)

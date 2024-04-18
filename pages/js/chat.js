@@ -181,7 +181,7 @@ function handleMessage(message) {
         displayNormalMessage(message);
     }else if(message.type === "userCount"){
         console.log("userCount",message.data)
-        document.getElementById("userCount").textContent = message.data.UserCount
+        document.getElementById("userCount").textContent = "在线用户数："+message.data.UserCount
     }else if(message.type === "roomList"){
         console.log("roomList",message.data)
         handleRoomList(message.chatRoomList)

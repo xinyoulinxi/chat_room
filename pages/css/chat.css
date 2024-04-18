@@ -187,6 +187,7 @@
 
 .room-list {
     display: flex;
+
     flex-grow: 1;
     min-width: 200px;
     min-height: 32px;
@@ -198,10 +199,12 @@
 }
 .user-count{
     display: flex;
-    color: black;
+    color: seagreen;
     min-width: 64px;
     font-weight: bold;
-    font-size: 18px;
+    margin-left: 20px;
+    margin-right: 10px;
+    font-size: 16px;
 }
 .create-room-btn {
     flex-grow: 0;
