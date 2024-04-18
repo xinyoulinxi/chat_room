@@ -179,7 +179,12 @@ function handleMessage(message) {
     } else if (message.type === "text" || message.type === "") {
         displayNormalMessage(message);
     }
+    // 设置一个偏移量
+    const offset = 500;
     if (message.userId === userId || message.userName === userName) {
+        messageDisplay.scrollTop = messageDisplay.scrollHeight;
+    } else if (messageDisplay.scrollHeight - messageDisplay.scrollTop - messageDisplay.clientHeight <= offset) {// 检查滚动条是否距离底部一个指定的偏移量
+        // 如果滚动条距离底部小于等于指定偏移量，则将滚动条滚动到底部
         messageDisplay.scrollTop = messageDisplay.scrollHeight;
     }
 }
