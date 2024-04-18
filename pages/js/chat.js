@@ -407,7 +407,11 @@ function displayImageMessage(message) {
 // Function to display a message
 function displayNormalMessage(message) {
     const messageElement = document.createElement('div');
-    messageElement.textContent = message.content; // Add username before message
+    // messageElement.textContent = message.content; // Add username before message
+    const messageText = document.createElement('pre');
+    messageText.textContent = message.content
+    messageElement.appendChild(messageText)
+
     messageElement.classList.add('message-bubble');
     if (message.userId === userId || message.userName === userName) {
         messageElement.classList.add('my-message');
