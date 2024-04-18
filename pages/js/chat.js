@@ -180,8 +180,22 @@ function handleMessage(message) {
         displayNormalMessage(message);
     }
     // 设置一个偏移量
-    const offset = 500;
+    // const offset = 500;
+    // if (message.userId === userId || message.userName === userName) {
+    //     messageDisplay.scrollTop = messageDisplay.scrollHeight;
+    // } else if (messageDisplay.scrollHeight - messageDisplay.scrollTop - messageDisplay.clientHeight <= offset) {// 检查滚动条是否距离底部一个指定的偏移量
+    //     // 如果滚动条距离底部小于等于指定偏移量，则将滚动条滚动到底部
+    //     messageDisplay.scrollTop = messageDisplay.scrollHeight;
+    // }
     if (message.userId === userId || message.userName === userName) {
+        scrollToBottom(0)
+    } else {
+        scrollToBottom()
+    }
+}
+
+function scrollToBottom(offset = 500) {
+    if (offset <= 0) {
         messageDisplay.scrollTop = messageDisplay.scrollHeight;
     } else if (messageDisplay.scrollHeight - messageDisplay.scrollTop - messageDisplay.clientHeight <= offset) {// 检查滚动条是否距离底部一个指定的偏移量
         // 如果滚动条距离底部小于等于指定偏移量，则将滚动条滚动到底部
@@ -249,6 +263,7 @@ function initSocket() {
     };
     socket.onopen = function (event) {
         console.log("socket open", event)
+        document.title = `Chat Room - ${chatRoom}`;
     };
     // 自动重连
     socket.onclose = function (event) {
@@ -350,9 +365,24 @@ function uploadFile(fileName, data, callback) {
 function displayImageMessage(message) {
     const imageElement = document.createElement('img');
     imageElement.src = message.image; // Set src to the image field of the message
+    imageElement.dataset.retry = 0
     imageElement.loading = 'lazy'; // 设置图片懒加载
     imageElement.classList.add('message-bubble');
     imageElement.classList.add('message-bubble-img');
+    imageElement.onerror = function (e) {
+        let src = e.target.src
+        let retry = parseInt(e.target.dataset.retry) || 0
+        if (retry < 3) {
+            e.target.dataset.retry = retry + 1
+            console.log("图片加载失败 重试", retry, src)
+            setTimeout(function () {
+                e.target.src = src
+            }, 3000 * (retry + 1))
+        }
+    }
+    imageElement.onload = function (e) {
+        scrollToBottom(500)
+    }
     if (message.userId === userId || message.userName === userName) {
         imageElement.classList.add('my-message');
     } else {

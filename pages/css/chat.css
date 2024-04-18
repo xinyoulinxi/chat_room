@@ -37,7 +37,7 @@
     border-radius: 6px;
 }
 .message-bubble-img {
-    min-height: 320px;
+    max-height: 320px;
 }
 
 .user-name {
