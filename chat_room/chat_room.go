@@ -104,7 +104,7 @@ func HistoryMessagesHandler(w http.ResponseWriter, r *http.Request) {
 	utils.WriteResponseWithData(w, chat_type.ErrorCodeSuccess, "Success", jsonMsg)
 }
 
-func UploadFilehandler(w http.ResponseWriter, r *http.Request) {
+func UploadFileHandler(w http.ResponseWriter, r *http.Request) {
 	// 确保关闭请求体
 	defer r.Body.Close()
 	// 检查请求方法是否为POST

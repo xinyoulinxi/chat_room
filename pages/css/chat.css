@@ -185,7 +185,7 @@
     cursor: pointer;
 }
 
-.roomList {
+.room-list {
     display: flex;
     flex-grow: 1;
     min-width: 200px;
@@ -196,7 +196,13 @@
     margin-left: 10px;
     margin-bottom: 10px;
 }
-
+.user-count{
+    display: flex;
+    color: black;
+    min-width: 64px;
+    font-weight: bold;
+    font-size: 18px;
+}
 .create-room-btn {
     flex-grow: 0;
     color: black;
