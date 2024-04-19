@@ -2,7 +2,6 @@ package chat_room
 
 import (
 	"context"
-	"encoding/json"
 	"github.com/gorilla/websocket"
 	"log/slog"
 	"sync"
@@ -50,26 +49,21 @@ func (h *Room) BroadCast(m chat_type.Message) {
 	h.broadcast <- m
 }
 
+func (h *Room) onClientMessage(u *chat_type.User, m chat_type.Message) error {
+	h.BroadCast(m)
+	return nil
+}
+
+func (h *Room) onClientLeave(c *Client) {
+	slog.Info("user leave", "id", c.UserID, "userName", c.UserName, "roomName", h.RoomName)
+	count := len(h.clients)
+	h.unregister <- c
+	h.broadRoomUserCountMessage(count - 1)
+}
+
 // UserJoin 将用户加入房间
 func (h *Room) UserJoin(conn *websocket.Conn, user *chat_type.User) {
-	ctx, cancel := context.WithCancel(h.ctx)
-	client := &Client{
-		ctx:  ctx,
-		stop: cancel,
-		User: user,
-		conn: conn,
-		onMessage: func(u *chat_type.User, m chat_type.Message) error {
-			h.BroadCast(m)
-			return nil
-		},
-		send: make(chan []byte),
-		onClientLeave: func(c *Client) {
-			slog.Info("user leave", "id", c.UserID, "userName", c.UserName, "roomName", h.RoomName)
-			count := len(h.clients)
-			h.unregister <- c
-			h.broadRoomUserCountMessage(count - 1)
-		},
-	}
+	client := newClient(h.ctx, conn, user, h.onClientMessage, h.onClientLeave)
 	client.Serve()
 	slog.Info("new user join", "id", user.UserID, "userName", user.UserName, "roomName", h.RoomName)
 	count := len(h.clients)
@@ -83,22 +77,8 @@ func (h *Room) broadRoomUserCountMessage(count int) {
 		return
 	}
 	slog.Info("broadcast room user count", "roomName", h.RoomName)
-	type RoomCount struct {
-		UserCount int
-		RoomName  string
-	}
-	roomCount := RoomCount{
-		UserCount: count,
-		RoomName:  h.RoomName,
-	}
-	// 转换成json
-	jsonData, err := json.Marshal(roomCount)
-	if err != nil {
-		slog.Error("json marshal error", "error", err)
-		return
-	}
 	slog.Info("broadcast room user count end", "roomName", h.RoomName, "userCount", count)
-	h.BroadCast(chat_type.Message{Type: "userCount", Data: jsonData})
+	h.BroadCast(chat_type.NewUserCountMessage(count))
 }
 
 func (h *Room) serve() {
@@ -122,13 +102,18 @@ func (h *Room) serve() {
 				RemoveChatRoom(h.RoomName)
 			}
 		case message := <-h.broadcast:
-			switch message.Type {
-			case "text", "image", "file":
-				h.Messages.Append(message)
+			if h.Messages.Append(message) {
 				_ = chat_db.WriteRoomMessage(h.ChatRoom.RoomName, h.Messages)
 			}
+			messages := chat_type.Messages{message}
+			bytes, err := messages.Serialize()
+			if err != nil {
+				slog.Error("Failed to convert m to JSON when broadcast message", "roomName", h.RoomName, "error", err)
+				continue
+			}
+
 			for client := range h.clients {
-				_ = client.Send(message)
+				_ = client.Send(bytes)
 			}
 		}
 	}

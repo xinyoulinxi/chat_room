@@ -55,7 +55,6 @@ func LoadRoomMessage(chatName string) chat_type.Messages {
 
 // WriteRoomMessage 将聊天室消息历史保存到本地文件
 func WriteRoomMessage(chatName string, messages chat_type.Messages) error {
-	slog.Info("WriteRoomMessage", "room", chatName, "messages", messages)
 	err := messageStorage.SaveAll(chatName, messages)
 	if err != nil {
 		slog.Error("Failed to write room message", "room", chatName, "error", err)

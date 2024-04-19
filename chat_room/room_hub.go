@@ -27,7 +27,7 @@ func InitChatRoomHub() {
 func getRoom(roomName string) *Room {
 	messages := chat_db.LoadRoomMessage(roomName)
 	if messages.Len() == 0 {
-		messages.Append(chat_type.Message{Type: "text", Content: "welcome to " + roomName + "!"})
+		messages.Append(chat_type.NewNoticeMessage("welcome to " + roomName + "!"))
 	}
 	room := newRoom(&chat_type.ChatRoom{RoomName: roomName, Messages: messages})
 	room.Serve()
@@ -61,7 +61,7 @@ func GetChatRoom(roomName string) (*Room, bool) {
 			if name == roomName {
 				continue
 			}
-			room.BroadCast(chat_type.Message{Type: "roomList", ChatRoomList: roomList})
+			room.BroadCast(chat_type.NewRoomListMessage(roomList))
 		}
 		return room, false
 	}

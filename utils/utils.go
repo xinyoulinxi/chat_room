@@ -10,9 +10,6 @@ import (
 	"time"
 )
 
-func GetCurTime() string {
-	return time.Now().Format(time.DateTime)
-}
 func GetRandomString(length int) string {
 	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 	b := make([]byte, length)

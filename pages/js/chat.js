@@ -169,6 +169,13 @@ function updateAvatar() {
     });
 }
 
+function displayNoticeElement(message){
+    const messageElement = document.createElement('div');
+    messageElement.textContent = message.content
+    messageElement.classList.add('message-notice-text')
+    messageDisplay.appendChild(messageElement)
+}
+
 function displayProfileElement(message, element) {
     // 创建最外层容器
     const container = document.createElement('div');
@@ -251,26 +258,43 @@ function getFileMessageElement(message) {
 
 function displayMessage(message) {
     insertSendTime(message)
-    if (message.type === "image") {
-        displayProfileElement(message, getImageMessageElement(message))
-    } else if (message.type === "file") {
-        displayProfileElement(message,getFileMessageElement(message))
-        displayDownloadElement(message)
-    } else if (message.type === "text" || message.type === "") {
-        displayProfileElement(message, getNormalMessage(message))
+    switch (message.type){
+        case "notice":
+            displayNoticeElement(message)
+            break;
+        case "image":
+            displayProfileElement(message, getImageMessageElement(message))
+            break;
+        case "file":
+            displayProfileElement(message,getFileMessageElement(message))
+            displayDownloadElement(message)
+            break;
+        case "text":
+            displayProfileElement(message, getNormalMessage(message))
+            break;
+        default:
+            console.log("unknown message type", message)
     }
+    // if (message.type === "image") {
+    //     displayProfileElement(message, getImageMessageElement(message))
+    // } else if (message.type === "file") {
+    //     displayProfileElement(message,getFileMessageElement(message))
+    //     displayDownloadElement(message)
+    // } else if (message.type === "text" || message.type === "") {
+    //     displayProfileElement(message, getNormalMessage(message))
+    // }
 }
 
 function handleMessage(message) {
     console.log("handleMessage", message)
-    if (message.type === "text" || message.type === "image" || message.type === "file") {
+    if (message.type === "text" || message.type === "image" || message.type === "file" || message.type==="notice") {
         displayMessage(message)
     } else if (message.type === "userCount") {
         console.log("userCount", message.data)
-        document.getElementById("userCount").textContent = "在线用户数：" + message.data.UserCount
+        document.getElementById("userCount").textContent = "在线用户数：" + message.data
     } else if (message.type === "roomList") {
         console.log("roomList", message.data)
-        handleRoomList(message.chatRoomList)
+        handleRoomList(message.data)
     }
     if (message.userId === userId || message.userName === userName) {
         scrollToBottom(0)

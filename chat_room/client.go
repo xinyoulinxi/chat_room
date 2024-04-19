@@ -2,13 +2,11 @@ package chat_room
 
 import (
 	"context"
-	"encoding/json"
 	"github.com/gorilla/websocket"
 	"log/slog"
 	"sync"
 	"time"
 	chat_type "web_server/type"
-	"web_server/utils"
 )
 
 const (
@@ -32,6 +30,20 @@ type Client struct {
 	onClientLeave onClientLeave
 }
 
+func newClient(ctx context.Context, conn *websocket.Conn, user *chat_type.User, onMessage onMessage, onClientLeave onClientLeave) *Client {
+	ctx, cancel := context.WithCancel(ctx)
+	client := &Client{
+		ctx:           ctx,
+		stop:          cancel,
+		User:          user,
+		conn:          conn,
+		send:          make(chan []byte),
+		onMessage:     onMessage,
+		onClientLeave: onClientLeave,
+	}
+	return client
+}
+
 func (c *Client) Serve() {
 	c.init.Do(func() {
 		slog.Info("Client Serve", "id", c.UserID, "userName", c.UserName)
@@ -44,17 +56,11 @@ func (c *Client) Stop() {
 	c.stop()
 }
 
-func (c *Client) Send(m chat_type.Message) error {
-	slog.Info("sendMessage to client", "id", c.UserID, "userName", c.UserName, "content", m.Content, "type", m.Type, "roomName", m.RoomName, "sendTime", m.SendTime)
-	jsonMsg, err := json.Marshal([]chat_type.Message{m})
-	if err != nil {
-		slog.Error("Failed to convert m to JSON", "error", err)
-		return err
-	}
+func (c *Client) Send(m []byte) error {
 	if c.send == nil {
 		return nil
 	} else {
-		c.send <- jsonMsg
+		c.send <- m
 	}
 	return nil
 }
@@ -77,7 +83,7 @@ func (c *Client) readPump() {
 		}
 
 		var message chat_type.Message
-		err = json.Unmarshal(msg, &message)
+		err = message.Deserialize(msg)
 		if err != nil {
 			slog.Error("Failed to parse message", "error", err)
 			continue
@@ -86,8 +92,9 @@ func (c *Client) readPump() {
 		// tUer := user.GetUserById(id)
 		// 暂时直接使用消息带上来的userName
 		// message.UserName = tUer.UserName
-		message.MsgID = utils.GenerateId()
-		message.SendTime = utils.GetCurTime()
+		message.UserID = c.UserID
+		message.UserName = c.UserName
+		message.Wrap()
 		// 广播消息
 		err = c.onMessage(c.User, message)
 	}

@@ -54,7 +54,14 @@ type MessageStorage struct {
 func (s *MessageStorage) LoadAll(room string) (chat_type.Messages, error) {
 	records := chat_type.Messages{}
 	_, err := s.handler.Get("chatroom_"+room, &records, "chatroom")
-	return records, err
+	if err != nil {
+		return records, err
+	}
+	messages := chat_type.Messages(make([]chat_type.Message, 0, len(records)))
+	for i := range records {
+		messages.Append(records[i])
+	}
+	return messages, err
 }
 
 func (s *MessageStorage) SaveAll(room string, messages chat_type.Messages) error {
