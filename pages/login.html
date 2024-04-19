@@ -36,6 +36,12 @@
         <button onclick="register()">注册并登录</button>
     </div>
     <script src="/pages/js/login.js"></script>
+    <script>
+        window.addEventListener('DOMContentLoaded',function () {
+            document.getElementById('usernameInput').value = localStorage.getItem("username");
+            document.getElementById('passwordInput').value = localStorage.getItem("password");
+        });
+    </script>
 </body>
 
 </html>
