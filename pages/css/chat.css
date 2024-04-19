@@ -2,14 +2,14 @@
     display: flex;
     flex: 1; /* 占用所有剩余空间 */
     overflow: auto; /* 允许滚动 */
-    width: 100%;
+    width: calc(100% - 20px);
     /* 容器宽度为100% */
     height: 640px;
 }
 .chatroom-container {
     display: flex;
     /* 容器宽度为100% */
-    width: 100%;
+    width: calc(100% - 20px);
     background-color: gray;
 }
 
@@ -19,7 +19,7 @@
     /* 启用Flexbox布局 */
     align-items: center;
     /* 垂直居中对齐 */
-    width: 100%;
+    width: calc(100% - 20px);
     background-color: #F5F5F5;
     /* 容器宽度为100% */
     align-items: flex-start;
