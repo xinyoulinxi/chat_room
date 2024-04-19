@@ -1,6 +1,7 @@
 package chat_db
 
 import (
+	"sort"
 	chat_type "web_server/type"
 )
 
@@ -11,16 +12,39 @@ type Handler interface {
 
 type RoomStorage struct {
 	handler Handler
+	rooms   chat_type.RoomList
 }
 
 func (s *RoomStorage) LoadAll() (chat_type.RoomList, error) {
+	if len(s.rooms) > 0 {
+		return s.rooms, nil
+	}
 	records := chat_type.RoomList{}
 	_, err := s.handler.Get("room_list", &records)
+	sort.Sort(sort.StringSlice(records))
+	s.rooms = records
 	return records, err
 }
 
 func (s *RoomStorage) SaveAll(rooms chat_type.RoomList) error {
+	sort.Sort(sort.StringSlice(rooms))
+	s.rooms = rooms
 	return s.handler.Set("room_list", rooms)
+}
+
+func (s *RoomStorage) FindRoom(room string) bool {
+	index := sort.SearchStrings(s.rooms, room)
+	if index >= len(s.rooms) || s.rooms[index] != room {
+		return false
+	}
+	return true
+}
+
+func (s *RoomStorage) Append(room string) (bool, error) {
+	if !s.FindRoom(room) {
+		return true, s.SaveAll(append(s.rooms, room))
+	}
+	return false, nil
 }
 
 type MessageStorage struct {

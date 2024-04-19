@@ -77,10 +77,6 @@ func (h *Room) UserJoin(conn *websocket.Conn, user *chat_type.User) {
 	h.broadRoomUserCountMessage(count + 1)
 }
 
-func (h *Room) sendRoomList(c *Client) {
-	_ = c.Send(chat_type.Message{Type: "roomList", ChatRoomList: ListChatRoom()})
-}
-
 func (h *Room) broadRoomUserCountMessage(count int) {
 	if count <= 0 {
 		slog.Info("room user is empty skip broadcast", "roomName", h.RoomName)

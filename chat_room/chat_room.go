@@ -5,6 +5,7 @@ import (
 	"github.com/gorilla/websocket"
 	"log/slog"
 	"net/http"
+	chat_db "web_server/db"
 	chat_type "web_server/type"
 	"web_server/user"
 	"web_server/utils"
@@ -77,7 +78,7 @@ func HistoryMessagesHandler(w http.ResponseWriter, r *http.Request) {
 		utils.WriteResponse(w, chat_type.ErrorUserNotExist, "User not exist")
 		return
 	}
-	if exist, _ := ChatRoomExist(roomName); !exist {
+	if exist := chat_db.CheckRoomName(roomName); !exist {
 		utils.WriteResponse(w, chat_type.ErrorInvalidInput, "Chat room not exist")
 		return
 	}
@@ -154,7 +155,7 @@ func ChatRoomListHandler(w http.ResponseWriter, r *http.Request) {
 	userId := r.URL.Query().Get("id")
 	slog.Info("ChatRoomListHandler", "userId", userId)
 
-	roomList := ListChatRoom()
+	roomList := chat_db.LoadRoomNameList()
 	slog.Info("ChatRoomListHandler", "chatRoomList", roomList)
 	// Convert chat room list to JSON
 	jsonMsg, err := json.Marshal(roomList)
@@ -182,7 +183,7 @@ func ChatRoomHandler(w http.ResponseWriter, r *http.Request) {
 		utils.WriteResponse(w, chat_type.ErrorInvalidInput, "Invalid user id")
 		return
 	}
-	if exist, _ := ChatRoomExist(chatRoomName); !exist {
+	if exist := chat_db.CheckRoomName(chatRoomName); !exist {
 		utils.WriteResponse(w, chat_type.ErrorInvalidInput, "Chat room not exist")
 		return
 	}

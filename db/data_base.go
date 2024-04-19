@@ -36,6 +36,14 @@ func LoadRoomNameList() chat_type.RoomList {
 	return list
 }
 
+func CheckRoomName(chatName string) bool {
+	return roomStorage.FindRoom(chatName)
+}
+
+func AppendRoomName(chatName string) (bool, error) {
+	return roomStorage.Append(chatName)
+}
+
 // LoadRoomMessage 从本地文件中读取聊天室消息历史
 func LoadRoomMessage(chatName string) chat_type.Messages {
 	messages, err := messageStorage.LoadAll(chatName)

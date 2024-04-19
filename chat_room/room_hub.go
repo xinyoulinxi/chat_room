@@ -2,17 +2,15 @@ package chat_room
 
 import (
 	"log/slog"
-	"sort"
 	"sync"
 	chat_db "web_server/db"
 	chat_type "web_server/type"
 )
 
 var (
-	initRoom     sync.Once
-	chatRoomHub  = make(map[string]*Room)
-	chatRoomList = make([]string, 0)
-	mux          sync.RWMutex
+	initRoom    sync.Once
+	chatRoomHub = make(map[string]*Room)
+	mux         sync.RWMutex
 )
 
 // InitChatRoomHub 从本地文件中初始化房间信息
@@ -21,30 +19,8 @@ func InitChatRoomHub() {
 		roomList := chat_db.LoadRoomNameList()
 		for _, room := range roomList {
 			chatRoomHub[room] = getRoom(room)
-			chatRoomList = append(chatRoomList, room)
 		}
 	})
-}
-
-// ListChatRoom 返回当前服务器房间名称列表
-func ListChatRoom() []string {
-	return chatRoomList
-}
-
-func ChatRoomExist(roomName string) (bool, bool) {
-	mux.RLock()
-	defer mux.RUnlock()
-	_, ok := chatRoomHub[roomName]
-	if !ok {
-		sort.Sort(sort.StringSlice(chatRoomList))
-		index := sort.SearchStrings(chatRoomList, roomName)
-		if index >= len(chatRoomList) || chatRoomList[index] != roomName {
-			return false, false
-		} else {
-			return true, false
-		}
-	}
-	return true, true
 }
 
 // getRoom 从本地文件加载房间信息
@@ -74,20 +50,18 @@ func GetChatRoom(roomName string) (*Room, bool) {
 		room = getRoom(roomName)
 		chatRoomHub[roomName] = room
 
-		// chatRoomList中查找roomName，如果不存在则添加
-		sort.Sort(sort.StringSlice(chatRoomList))
-		index := sort.SearchStrings(chatRoomList, roomName)
-		if index >= len(chatRoomList) || chatRoomList[index] != roomName {
-			chatRoomList = append(chatRoomList, roomName)
+		// 添加room到列表中
+		if ok, err := chat_db.AppendRoomName(roomName); err != nil {
+			slog.Error("failed to append room name", "roomName", roomName, "error", err)
+		} else if ok {
+			slog.Info("add new chat room", "roomName", roomName, "chatRoomList", chat_db.LoadRoomNameList())
 		}
-		slog.Info("add new chat room", "roomName", roomName, "chatRoomList", ListChatRoom())
-		// 将新房间信息写入本地
-		chat_db.SaveRoomNameList(ListChatRoom())
+		roomList := chat_db.LoadRoomNameList()
 		for name, room := range chatRoomHub {
 			if name == roomName {
 				continue
 			}
-			room.BroadCast(chat_type.Message{Type: "roomList", ChatRoomList: ListChatRoom()})
+			room.BroadCast(chat_type.Message{Type: "roomList", ChatRoomList: roomList})
 		}
 		return room, false
 	}
