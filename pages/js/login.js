@@ -148,6 +148,8 @@ function login() {
             if (data.errorCode !== 0) {
                 showToast(data.message);
             } else {
+                localStorage.setItem("username", username);
+                localStorage.setItem("password", password);
                 userid = data.message
                 // 登录成功，跳转到聊天室页面
                 goToChatRoom(userid,username,chatRoom);
