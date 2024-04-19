@@ -77,28 +77,13 @@ func (h *Room) UserJoin(conn *websocket.Conn, user *chat_type.User) {
 	h.broadRoomUserCountMessage(count + 1)
 }
 
-// sendHistory 发送历史消息
-func (h *Room) sendHistory(c *Client) {
-	var messages []chat_type.Message
-	if len(h.Messages) > maxHistoryCount {
-		// 保留最新100条
-		messages = h.Messages[len(h.Messages)-maxHistoryCount:]
-	} else {
-		messages = h.Messages
-	}
-
-	for _, message := range messages {
-		_ = c.Send(message)
-	}
-	_ = c.Send(chat_type.Message{Type: "over", RoomName: h.RoomName})
-}
-
 func (h *Room) sendRoomList(c *Client) {
 	_ = c.Send(chat_type.Message{Type: "roomList", ChatRoomList: ListChatRoom()})
 }
 
 func (h *Room) broadRoomUserCountMessage(count int) {
 	if count <= 0 {
+		slog.Info("room user is empty skip broadcast", "roomName", h.RoomName)
 		return
 	}
 	slog.Info("broadcast room user count", "roomName", h.RoomName)
@@ -117,9 +102,6 @@ func (h *Room) broadRoomUserCountMessage(count int) {
 		return
 	}
 	slog.Info("broadcast room user count end", "roomName", h.RoomName, "userCount", count)
-	if count <= 0 {
-		return
-	}
 	h.BroadCast(chat_type.Message{Type: "userCount", Data: jsonData})
 }
 
@@ -146,8 +128,8 @@ func (h *Room) serve() {
 		case message := <-h.broadcast:
 			switch message.Type {
 			case "text", "image", "file":
-				h.Messages = append(h.Messages, message)
-				_ = chat_db.WriteChatInfoToLocalFile(h.ChatRoom)
+				h.Messages.Append(message)
+				_ = chat_db.WriteRoomMessage(h.ChatRoom.RoomName, h.Messages)
 			}
 			for client := range h.clients {
 				_ = client.Send(message)

@@ -56,7 +56,7 @@ func InitUserInfos() {
 }
 
 func updateUserInfosFromLocalFile() {
-	userList = chat_db.LoadUsersFromLocalFile()
+	userList = chat_db.LoadUsers()
 	for _, user := range userList {
 		userMap[user.UserID] = user
 	}
@@ -106,7 +106,7 @@ func UpdateUserAvatarHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func saveUserInfosToLocalFile() {
-	err := chat_db.WriteUsersToLocalFile(userList)
+	err := chat_db.WriteUsers(userList)
 	if err != nil {
 		return
 	}

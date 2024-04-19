@@ -13,7 +13,7 @@ import (
 func main() {
 	utils.InitEnv()
 
-	if storage, err := chat_db.NewFileStorage(utils.DbPath); err != nil {
+	if storage, err := chat_db.NewFileHandler(utils.DbPath); err != nil {
 		slog.Error("init file storage error", "error", err)
 		os.Exit(1)
 	} else {

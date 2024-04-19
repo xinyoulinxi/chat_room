@@ -82,17 +82,11 @@ func HistoryMessagesHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	chatRoom, _ := GetChatRoom(roomName)
-	var messages []chat_type.Message
 	count := loginData.Count
 	if count <= 0 {
 		count = maxHistoryCount
 	}
-	if len(chatRoom.Messages) > count {
-		// 保留最新100条
-		messages = chatRoom.Messages[len(chatRoom.Messages)-count:]
-	} else {
-		messages = chatRoom.Messages
-	}
+	messages := chatRoom.Messages.LastN(count)
 	// 将chatRoom.Messages转换成json字符串
 	jsonMsg, err := json.Marshal(messages)
 	if err != nil {

@@ -1,29 +1,30 @@
 package chat_db
 
 import (
+	"encoding/json"
 	"os"
 	"path"
 	"sync"
 	"web_server/utils"
 )
 
-type fileStorage struct {
+type fileHandler struct {
 	dir    string
 	keyMap sync.Map
 }
 
-func NewFileStorage(dir string) (*Storage, error) {
-	handler := &fileStorage{
+func NewFileHandler(dir string) (Handler, error) {
+	handler := &fileHandler{
 		dir:    dir,
 		keyMap: sync.Map{},
 	}
 	if err := utils.EnsureDir(dir); err != nil {
 		return nil, err
 	}
-	return &Storage{handler}, nil
+	return handler, nil
 }
 
-func (f *fileStorage) getKey(key string, group ...string) string {
+func (f *fileHandler) getKey(key string, group ...string) string {
 	elem := make([]string, 1, len(group)+2)
 	elem[0] = f.dir
 	for _, g := range group {
@@ -33,7 +34,7 @@ func (f *fileStorage) getKey(key string, group ...string) string {
 	return path.Join(elem...)
 }
 
-func (f *fileStorage) Set(key string, value Serializable, group ...string) error {
+func (f *fileHandler) Set(key string, value any, group ...string) error {
 	key = f.getKey(key, group...)
 	v, ok := f.keyMap.LoadOrStore(key, &sync.Mutex{})
 	mutex := v.(*sync.Mutex)
@@ -42,7 +43,7 @@ func (f *fileStorage) Set(key string, value Serializable, group ...string) error
 			return err
 		}
 	}
-	bytes, err := value.Serialize()
+	bytes, err := json.Marshal(value)
 	if err != nil {
 		return err
 	}
@@ -51,7 +52,7 @@ func (f *fileStorage) Set(key string, value Serializable, group ...string) error
 	return os.WriteFile(key, bytes, 0644)
 }
 
-func (f *fileStorage) Get(key string, value Serializable, group ...string) (bool, error) {
+func (f *fileHandler) Get(key string, value any, group ...string) (bool, error) {
 	key = f.getKey(key, group...)
 	v, ok := f.keyMap.LoadOrStore(key, &sync.Mutex{})
 	mutex := v.(*sync.Mutex)
@@ -69,5 +70,5 @@ func (f *fileStorage) Get(key string, value Serializable, group ...string) (bool
 	if len(bytes) == 0 {
 		return false, err
 	}
-	return true, value.Deserialize(bytes)
+	return true, json.Unmarshal(bytes, &value)
 }

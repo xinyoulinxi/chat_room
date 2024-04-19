@@ -5,51 +5,50 @@ import (
 	chat_type "web_server/type"
 )
 
-// SaveRoomNameListToFile 将聊天室列表保存到本地文件
-func SaveRoomNameListToFile(chatRoomList chat_type.RoomList) {
-	err := Default().Set("room_list", &chatRoomList)
+var (
+	roomStorage    RoomStorage
+	messageStorage MessageStorage
+	userStorage    UserStorage
+)
+
+func Init(h Handler) {
+	roomStorage = RoomStorage{handler: h}
+	messageStorage = MessageStorage{handler: h}
+	userStorage = UserStorage{handler: h}
+}
+
+// SaveRoomNameList 将聊天室列表保存到本地文件
+func SaveRoomNameList(chatRoomList chat_type.RoomList) {
+	err := roomStorage.SaveAll(chatRoomList)
 	if err != nil {
 		slog.Error("Failed to save room list", "error", err)
 		return
 	}
 }
 
-// LoadRoomNameListFromFile 从本地文件中读取聊天室列表
-func LoadRoomNameListFromFile() chat_type.RoomList {
-	roomList := chat_type.RoomList{}
-	_, err := Default().Get("room_list", &roomList)
+// LoadRoomNameList 从本地文件中读取聊天室列表
+func LoadRoomNameList() chat_type.RoomList {
+	list, err := roomStorage.LoadAll()
 	if err != nil {
 		slog.Error("Failed to read room list", "error", err)
-		return roomList
+		return list
 	}
-	return roomList
+	return list
 }
 
-// initDefaultChatRoom 初始化默认聊天室
-func initDefaultChatRoom(chatName string) *chat_type.ChatRoom {
-	chatRoom := chat_type.ChatRoom{RoomName: chatName}
-	chatRoom.Messages = make([]chat_type.Message, 0)
-	chatRoom.Messages = append(chatRoom.Messages, chat_type.Message{Type: "text", Content: "welcome to " + chatName + "!"})
-	return &chatRoom
-}
-
-// LoadChatRoomFromLocalFile 从本地文件中读取聊天室信息
-func LoadChatRoomFromLocalFile(chatName string) *chat_type.ChatRoom {
-	messages := chat_type.Messages{}
-	_, err := Default().Get("chatroom_"+chatName, &messages, "chatroom")
+// LoadRoomMessage 从本地文件中读取聊天室消息历史
+func LoadRoomMessage(chatName string) chat_type.Messages {
+	messages, err := messageStorage.LoadAll(chatName)
 	if err != nil {
 		slog.Error("Failed to read room message", "room", chatName, "error", err)
-		return initDefaultChatRoom(chatName)
 	}
-	return &chat_type.ChatRoom{RoomName: chatName, Messages: messages}
+	return messages
 }
 
-// WriteChatInfoToLocalFile 将聊天室信息保存到本地文件
-func WriteChatInfoToLocalFile(chatRoom *chat_type.ChatRoom) error {
-	chatName := chatRoom.RoomName
-	messages := chatRoom.Messages
-	slog.Info("WriteChatInfoToLocalFile", "room", chatName, "messages", messages)
-	err := Default().Set("chatroom_"+chatName, &messages, "chatroom")
+// WriteRoomMessage 将聊天室消息历史保存到本地文件
+func WriteRoomMessage(chatName string, messages chat_type.Messages) error {
+	slog.Info("WriteRoomMessage", "room", chatName, "messages", messages)
+	err := messageStorage.SaveAll(chatName, messages)
 	if err != nil {
 		slog.Error("Failed to write room message", "room", chatName, "error", err)
 		return err
@@ -57,8 +56,8 @@ func WriteChatInfoToLocalFile(chatRoom *chat_type.ChatRoom) error {
 	return nil
 }
 
-func WriteUsersToLocalFile(users chat_type.Users) error {
-	err := Default().Set("user", &users)
+func WriteUsers(users chat_type.Users) error {
+	err := userStorage.SaveAll(users)
 	if err != nil {
 		slog.Error("Failed to save users", "error", err)
 		return err
@@ -66,9 +65,8 @@ func WriteUsersToLocalFile(users chat_type.Users) error {
 	return nil
 }
 
-func LoadUsersFromLocalFile() chat_type.Users {
-	users := chat_type.Users{}
-	_, err := Default().Get("user", &users)
+func LoadUsers() chat_type.Users {
+	users, err := userStorage.LoadAll()
 	if err != nil {
 		slog.Error("Failed to read users", "error", err)
 	}

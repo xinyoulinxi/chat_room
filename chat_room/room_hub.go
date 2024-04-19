@@ -18,7 +18,7 @@ var (
 // InitChatRoomHub 从本地文件中初始化房间信息
 func InitChatRoomHub() {
 	initRoom.Do(func() {
-		roomList := chat_db.LoadRoomNameListFromFile()
+		roomList := chat_db.LoadRoomNameList()
 		for _, room := range roomList {
 			chatRoomHub[room] = getRoom(room)
 			chatRoomList = append(chatRoomList, room)
@@ -49,8 +49,11 @@ func ChatRoomExist(roomName string) (bool, bool) {
 
 // getRoom 从本地文件加载房间信息
 func getRoom(roomName string) *Room {
-	chatRoom := chat_db.LoadChatRoomFromLocalFile(roomName)
-	room := newRoom(chatRoom)
+	messages := chat_db.LoadRoomMessage(roomName)
+	if messages.Len() == 0 {
+		messages.Append(chat_type.Message{Type: "text", Content: "welcome to " + roomName + "!"})
+	}
+	room := newRoom(&chat_type.ChatRoom{RoomName: roomName, Messages: messages})
 	room.Serve()
 	return room
 }
@@ -79,7 +82,7 @@ func GetChatRoom(roomName string) (*Room, bool) {
 		}
 		slog.Info("add new chat room", "roomName", roomName, "chatRoomList", ListChatRoom())
 		// 将新房间信息写入本地
-		chat_db.SaveRoomNameListToFile(ListChatRoom())
+		chat_db.SaveRoomNameList(ListChatRoom())
 		for name, room := range chatRoomHub {
 			if name == roomName {
 				continue
