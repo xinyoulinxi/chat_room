@@ -177,7 +177,7 @@ function displayProfileElement(message, element) {
     // 创建并设置图片元素
     const avatar = document.createElement('img');
     avatar.src = "data/default_avatar.webp" // message.avatarUrl;
-    avatar.alt = 'Avatar';
+    avatar.alt = 'S';
     avatar.className = 'avatar';
     getAvatarUrl(message.userName, avatar)
     avatar.onclick = function () {

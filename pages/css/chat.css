@@ -19,13 +19,12 @@
     /* 启用Flexbox布局 */
     align-items: center;
     /* 垂直居中对齐 */
-    width: calc(100% - 20px);
+    width: 100%;
     background-color: #F5F5F5;
     /* 容器宽度为100% */
     align-items: flex-start;
     flex-direction: column;
     overflow-y: auto;
-    padding:10px;
 }
 
 .message-bubble {
@@ -264,6 +263,7 @@
     width: 50px;  /* 头像宽度 */
     height: 50px; /* 头像高度 */
     margin-right: 10px; /* 头像和文本之间的间距 */
+    margin-left:10px;
     border-radius: 50%; /* 头像为圆形 */
 }
 
