@@ -40,8 +40,18 @@
 .message-bubble>pre{
     margin: 0;
     white-space: break-spaces;
+    word-break: break-word;
+    display: inline-block;
 }
-
+.message-bubble>a{
+    white-space: break-spaces;
+    word-break: break-word;
+    text-decoration-line: none;
+    color: #4a6087;
+}
+.message-bubble>a:visited{
+    color: #4a6087;
+}
 .message-bubble-img {
     max-height: 320px;
 }

@@ -512,8 +512,24 @@ function showBigImage(src) {
 function getNormalMessage(message) {
     const messageElement = document.createElement('div');
     const messageText = document.createElement('pre');
-    messageText.textContent = message.content
-    messageElement.appendChild(messageText)
+    const content = extractText(message.content)
+    for(let part of content){
+        switch (part.type){
+            case "text":
+                const textEl = document.createElement('pre');
+                textEl.textContent = part.text
+                messageElement.appendChild(textEl)
+                break
+            case "link":
+                const linkEl = document.createElement('a');
+                console.log("link",part)
+                linkEl.innerText = part.url
+                linkEl.href = part.url
+                linkEl.target="_blank"
+                messageElement.appendChild(linkEl)
+                break
+        }
+    }
     return messageElement
 }
 
@@ -574,3 +590,20 @@ function sendFile() {
     }
 }
 
+function extractText(text) {
+    const results = [];
+    let regx = /https?:\/\/[^\s\u4e00-\u9fa5]+/g
+    let currentPosition = 0;
+    while (currentPosition < text.length) {
+        const match = regx.exec(text);
+        if (match) {
+            results.push({type: 'text', text: text.substring(currentPosition, match.index)});
+            results.push({type: 'link', url: match[0]});
+            currentPosition += match.index + match[0].length;
+        } else {
+            results.push({type: 'text', text: text.substring(currentPosition)});
+            break;
+        }
+    }
+    return results;
+}
