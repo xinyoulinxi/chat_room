@@ -597,9 +597,20 @@ function extractText(text) {
     while (currentPosition < text.length) {
         const match = regx.exec(text);
         if (match) {
-            results.push({type: 'text', text: text.substring(currentPosition, match.index)});
-            results.push({type: 'link', url: match[0]});
-            currentPosition += match.index + match[0].length;
+            // 链接前段文字
+            let content = text.substring(currentPosition, match.index)
+            if (content !== "") {
+                results.push({type: 'text', text: content});
+            }
+
+            // 判断url是否存在非法字符
+            let link = match[0]
+            const urlMatch = (/[^a-zA-Z0-9-_.~%&=+\/]*$/g).exec(link)
+            if (urlMatch) {
+                link = link.substring(0, /[^a-zA-Z0-9-_.~%&=+\/]*$/g.exec(link).index)
+            }
+            results.push({type: 'link', url: link});
+            currentPosition += match.index + link.length
         } else {
             results.push({type: 'text', text: text.substring(currentPosition)});
             break;
