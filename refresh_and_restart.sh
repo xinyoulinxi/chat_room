@@ -1,20 +1,20 @@
 #!/bin/bash
 
-# 查找web_server进程的PID
+# find web server process
 pid=$(ps -ef | grep 'web_server' | grep -v 'grep' | awk '{print $2}')
 
-# 判断PID是否存在
+# check if pid is not empty
 if [ -n "$pid" ]; then
-    echo "找到web_server进程，PID为：$pid"
-    echo "正在杀掉进程..."
+    echo "find web server process，PID: $pid"
+    echo "killing process ..."
     kill -9 $pid
-    echo "进程已被杀掉。"
+    echo "process has killed."
 else
-    echo "未找到web_server进程。"
+    echo "not find web server process."
 fi
-echo "更新git仓库..."
+echo "pull git repo..."
 git pull -r
-echo "更新git仓库完成。"
-echo "开始编译..."
+echo "update git repo over."
+echo "start compile..."
 ./build_and_run_backend.sh
-echo "编译完成。已在后台运行中。"
+echo "compile over。web server running in backend."
