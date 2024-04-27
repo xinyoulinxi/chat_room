@@ -83,7 +83,6 @@ func GetUserAvatarHandler(w http.ResponseWriter, r *http.Request) {
 	utils.WriteResponseWithData(w, chat_type.ErrorCodeSuccess, "success", jsonData)
 }
 
-// todo(ylvoid): 上传头像
 func UpdateUserAvatarHandler(w http.ResponseWriter, r *http.Request) {
 	id := r.URL.Query().Get("id")
 	avatarUrl := r.URL.Query().Get("url")

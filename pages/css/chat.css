@@ -89,16 +89,17 @@
 .message-download{
     color: gray;
     font-size: 16px;
+    margin-bottom: 10px;
     display: flex;
 }
 
 .message-download-me{
-    margin-right: 72px;
+    margin-right: 80px;
     align-self: flex-end;
 }
 
 .message-download-other{
-    margin-left: 72px;
+    margin-left: 80px;
     align-self: flex-start;
 }
 
