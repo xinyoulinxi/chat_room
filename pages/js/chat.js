@@ -141,14 +141,35 @@ function closeSocket() {
     }
 }
 
+var avatar_fetching = new Map();
+var avatar_map = new Map()
 function getAvatarUrl(userName, avatarElement) {
-    fetch('/get_avatar?userName=' + userName)
+    if (avatar_map.has(userName)) {
+        console.log("use cache", userName, avatar_map.get(userName))
+        avatarElement.src = avatar_map.get(userName)
+        return
+    }
+    if (avatar_fetching.has(userName)) {
+        avatar_fetching.get(userName).then(url => {
+            console.log("get avatar finish, use cache", userName, url)
+            avatarElement.src = url;
+        });
+        return;
+    }
+    let fetchPromise = fetch('/get_avatar?userName=' + userName)
         .then(response => response.json())
         .then(data => {
             if (data.errorCode === 0) {
+                console.log("fetch avatar by net success", userName, data.data)
+                avatar_map.set(userName, data.data)
                 avatarElement.src = data.data
+                return data.data;
             }
         });
+    avatar_fetching.set(userName, fetchPromise);
+    fetchPromise.finally(() => {
+        avatar_fetching.delete(userName);
+    });
 }
 
 function updateAvatar() {
@@ -169,7 +190,7 @@ function updateAvatar() {
     });
 }
 
-function displayNoticeElement(message){
+function displayNoticeElement(message) {
     const messageElement = document.createElement('div');
     messageElement.textContent = message.content
     messageElement.classList.add('message-notice-text')
@@ -188,9 +209,9 @@ function displayProfileElement(message, element) {
     avatar.className = 'avatar';
     getAvatarUrl(message.userName, avatar)
     avatar.onclick = function () {
-        if(message.userId === userId || message.userName === userName) {
+        if (message.userId === userId || message.userName === userName) {
             updateAvatar()
-        }else{
+        } else {
             showBigImage(this.src)
         }
     }
@@ -230,6 +251,7 @@ function displayProfileElement(message, element) {
     }
     messageDisplay.appendChild(container)
 }
+
 function displayDownloadElement(message) {
     const downLoadElement = document.createElement('a');
     downLoadElement.download = message.content;
@@ -238,7 +260,7 @@ function displayDownloadElement(message) {
     downLoadElement.classList.add('message-download');
     if (message.userName === userName || message.userId === userId) {
         downLoadElement.classList.add('message-download-me');
-    }else{
+    } else {
         downLoadElement.classList.add('message-download-other');
     }
     messageDisplay.appendChild(downLoadElement)
@@ -258,7 +280,7 @@ function getFileMessageElement(message) {
 
 function displayMessage(message) {
     insertSendTime(message)
-    switch (message.type){
+    switch (message.type) {
         case "notice":
             displayNoticeElement(message)
             break;
@@ -266,7 +288,7 @@ function displayMessage(message) {
             displayProfileElement(message, getImageMessageElement(message))
             break;
         case "file":
-            displayProfileElement(message,getFileMessageElement(message))
+            displayProfileElement(message, getFileMessageElement(message))
             displayDownloadElement(message)
             break;
         case "text":
@@ -286,8 +308,7 @@ function displayMessage(message) {
 }
 
 function handleMessage(message) {
-    console.log("handleMessage", message)
-    if (message.type === "text" || message.type === "image" || message.type === "file" || message.type==="notice") {
+    if (message.type === "text" || message.type === "image" || message.type === "file" || message.type === "notice") {
         displayMessage(message)
     } else if (message.type === "userCount") {
         console.log("userCount", message.data)
@@ -501,6 +522,7 @@ function getImageMessageElement(message) {
     });
     return imageElement
 }
+
 function showBigImage(src) {
     $.fancybox.open({
         src: src,
@@ -513,8 +535,8 @@ function getNormalMessage(message) {
     const messageElement = document.createElement('div');
     const messageText = document.createElement('pre');
     const content = extractText(message.content)
-    for(let part of content){
-        switch (part.type){
+    for (let part of content) {
+        switch (part.type) {
             case "text":
                 const textEl = document.createElement('pre');
                 textEl.textContent = part.text
@@ -522,10 +544,10 @@ function getNormalMessage(message) {
                 break
             case "link":
                 const linkEl = document.createElement('a');
-                console.log("link",part)
+                console.log("link", part)
                 linkEl.innerText = part.url
                 linkEl.href = part.url
-                linkEl.target="_blank"
+                linkEl.target = "_blank"
                 messageElement.appendChild(linkEl)
                 break
         }
