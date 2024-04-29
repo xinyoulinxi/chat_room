@@ -16,6 +16,50 @@ function init() {
             sendMessage();
         }
     });
+    messageInput.addEventListener('paste', function (event) {
+        // 检查粘贴的内容是否为图片
+        if (event.clipboardData.items && event.clipboardData.items[0].type.startsWith('image/')) {
+            const file = event.clipboardData.items[0].getAsFile();
+            let fileName = Math.random().toString(36).substring(2, 10) + "_" + file.name
+            const reader = new FileReader();
+            // 读取文件内容
+            reader.onload = function (e) {
+                Swal.fire({
+                    title: '是否发送图片?',
+                    html:`<img src="${e.target.result}" style="width: 100%" />`,
+                    type: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#95EC69',
+                    // cancelButtonColor: '#d33',
+                    confirmButtonText: '发送',
+                    cancelButtonText: '取消',
+                }).then(function (res) {
+                    console.log(res)
+                    if (res.isConfirmed) {
+                        uploadFile(fileName, e.target.result, function (filePath, fileType) {
+                            // 创建一个包含用户名、内容、图片和文件名的消息对象
+                            const messageObj = {
+                                type: fileType,
+                                userId: userId,
+                                content: fileName,
+                                userName: userName,
+                                roomName: chatRoom,
+                            };
+                            if (fileType === 'image')
+                                messageObj.image = filePath;
+                            else
+                                messageObj.file = filePath;
+                            socket.send(JSON.stringify(messageObj));
+                            showToast("文件发送成功");
+                            messageInput.value = ''; // 重置文件输入以便下次使用
+                        })
+                    }
+                })
+
+            };
+            reader.readAsDataURL(file);
+        }
+    })
     // Focus on the message input field
     messageInput.focus();
     connectToChatRoom();
