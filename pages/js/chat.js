@@ -7,6 +7,8 @@ var socket = null;
 var messageDisplay = document.getElementById('messageDisplay'); // 全局缓存
 var messageInput = document.getElementById('messageInput'); // 全局缓存
 
+let pageVisibility = true
+let unreadMessageCount = 0
 init()
 
 function init() {
@@ -26,7 +28,7 @@ function init() {
             reader.onload = function (e) {
                 Swal.fire({
                     title: '是否发送图片?',
-                    html:`<img src="${e.target.result}" style="width: 100%" />`,
+                    html: `<img src="${e.target.result}" style="width: 100%" />`,
                     type: 'question',
                     showCancelButton: true,
                     confirmButtonColor: '#95EC69',
@@ -60,9 +62,45 @@ function init() {
             reader.readAsDataURL(file);
         }
     })
+
+    // 监听页面显示状态，离开页面时增加消息记数且阻止消息滚动，重新进入页面后重置记数并自动滚动到底部最新消息
+    document.addEventListener('visibilitychange', function () {
+        switch (document.visibilityState) {
+            case 'hidden':
+                console.log("离开时间点：" + new Date());
+                pageVisibility = false;
+                break;
+            case 'visible':
+                console.log("重新进入时间点：" + new Date());
+                pageVisibility = true;
+                unreadMessageCount = 0;
+                document.title = `Chat Room - ${chatRoom}`;
+                scrollToBottom(0)
+                break;
+            default:
+                break;
+        }
+    })
     // Focus on the message input field
     messageInput.focus();
     connectToChatRoom();
+}
+
+/**
+ * 发送浏览器通知
+ * @param title 标题
+ * @param message 内容
+ */
+function browserNotify(title, message) {
+    // if (window.Notification && Notification.permission !== "denied") {
+    //     try {
+    //         Notification.requestPermission(function () {
+    //             new Notification(title, {body: message});
+    //         }).catch(e=>console.log(e));
+    //     }catch (e){
+    //         console.log(e)
+    //     }
+    // }
 }
 
 function getHistoryMessages() {
@@ -187,6 +225,7 @@ function closeSocket() {
 
 var avatar_fetching = new Map();
 var avatar_map = new Map()
+
 function getAvatarUrl(userName, avatarElement) {
     if (avatar_map.has(userName)) {
         console.log("use cache", userName, avatar_map.get(userName))
@@ -327,16 +366,28 @@ function displayMessage(message) {
     switch (message.type) {
         case "notice":
             displayNoticeElement(message)
+            if (!pageVisibility){
+                browserNotify(`[${chatRoom}]房间通知`, message.content)
+            }
             break;
         case "image":
             displayProfileElement(message, getImageMessageElement(message))
+            if (!pageVisibility){
+                browserNotify(`[${chatRoom}]${message.userName}`, "发送了一张图片")
+            }
             break;
         case "file":
             displayProfileElement(message, getFileMessageElement(message))
             displayDownloadElement(message)
+            if (!pageVisibility){
+                browserNotify(`[${chatRoom}]${message.userName}`,"上传了一个文件")
+            }
             break;
         case "text":
             displayProfileElement(message, getNormalMessage(message))
+            if (!pageVisibility){
+                browserNotify(`[${chatRoom}]${message.userName}`, message.content)
+            }
             break;
         default:
             console.log("unknown message type", message)
@@ -354,17 +405,26 @@ function displayMessage(message) {
 function handleMessage(message) {
     if (message.type === "text" || message.type === "image" || message.type === "file" || message.type === "notice") {
         displayMessage(message)
+        if (pageVisibility) {
+            if (message.userId === userId || message.userName === userName) {
+                scrollToBottom(0)
+            } else {
+                scrollToBottom()
+            }
+        } else {
+            unreadMessageCount++;
+            if (unreadMessageCount >= 99) {
+                document.title = `Chat Room - ${chatRoom} (99+)`;
+            } else {
+                document.title = `Chat Room - ${chatRoom} (${unreadMessageCount})`;
+            }
+        }
     } else if (message.type === "userCount") {
         console.log("userCount", message.data)
         document.getElementById("userCount").textContent = "在线用户数：" + message.data
     } else if (message.type === "roomList") {
         console.log("roomList", message.data)
         handleRoomList(message.data)
-    }
-    if (message.userId === userId || message.userName === userName) {
-        scrollToBottom(0)
-    } else {
-        scrollToBottom()
     }
 }
 
