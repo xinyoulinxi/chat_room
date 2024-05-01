@@ -94,10 +94,10 @@ func UpdateProfileHandler(w http.ResponseWriter, r *http.Request) {
 
 	// 解析请求体
 	var profileData struct {
-		Id          string `json:"id"`
-		Username    string `json:"username"`
-		Password    string `json:"password"`
-		NewUsername string `json:"newUsername"`
+		Id       string `json:"id"`
+		Username string `json:"username"`
+		Password string `json:"password"`
+		//NewUsername string `json:"newUsername"`
 		NewPassword string `json:"newPassword"`
 	}
 
@@ -109,19 +109,25 @@ func UpdateProfileHandler(w http.ResponseWriter, r *http.Request) {
 	slog.Info("UpdateProfileHandler", "profileData", profileData)
 	userName := profileData.Username
 	passWord := profileData.Password
-	newName := profileData.NewUsername
+	//newName := profileData.NewUsername
 	newPass := profileData.NewPassword
 
 	slog.Info("LoginHandler", "username", userName, "password", passWord)
-	if userName == "" || passWord == "" || newName == "" || newPass == "" {
+	if userName == "" || passWord == "" || newPass == "" {
 		utils.WriteResponse(w, chat_type.ErrorInvalidInput, "Blank input")
 		return
 	}
 
-	if newName == userName && newPass == passWord {
+	if newPass == passWord {
 		utils.WriteResponse(w, chat_type.ErrorCodeFail, "No change")
 		return
 	}
+
+	//if newName != userName {
+	//	utils.WriteResponse(w, chat_type.ErrorCodeFail, "User name can not change")
+	//	return
+	//}
+
 	if !CheckPassword(userName, passWord) {
 		utils.WriteResponse(w, chat_type.ErrorInvalidPassword, "Invalid password")
 		return
@@ -139,12 +145,16 @@ func UpdateProfileHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if len(newPass) < 6 {
+		utils.WriteResponse(w, chat_type.ErrorCodeFail, "Password length must be greater than 6")
+		return
+	}
 	if user.UserName != userName || user.PassWord != passWord {
 		utils.WriteResponse(w, chat_type.ErrorCodeFail, "Wrong password or username")
 		return
 	}
 
-	user.UserName = newName
+	//user.UserName = newName
 	user.PassWord = newPass
 	saveUserInfosToLocalFile()
 	utils.WriteResponse(w, chat_type.ErrorCodeSuccess, user.UserID)

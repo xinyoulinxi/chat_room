@@ -51,7 +51,7 @@ function initRoomList() {
             if (roomListData == null || roomListData.length === 0) {
                 return
             }
-            chatRoom = roomListData[0]
+            chatRoom = localStorage.getItem("chatRoom");
             // 自动登录
             // if(getCookie("userId") !== "" && getCookie("userName") !== ""){
             //     var userid = getCookie("userId")
@@ -62,6 +62,7 @@ function initRoomList() {
             select.onchange = function () {
                 chatRoom = this.value;
             };
+            var index = 0
             roomListData.forEach(room => {
                 // Create an option for each room
                 var option = document.createElement('option');
@@ -70,8 +71,11 @@ function initRoomList() {
                 option.textContent = room;
                 // Add the option to the select element
                 select.appendChild(option);
+                if (chatRoom === room) {
+                    select.selectedIndex = index
+                }
+                index++
             });
-            select.selectedIndex = 0
             // Add the select element to the room list
             roomList.appendChild(select);
         })
