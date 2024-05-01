@@ -5,10 +5,11 @@ var chatRoom = localStorage.getItem("chatRoom");
 var socket = null;
 var messageDisplay = document.getElementById('messageDisplay'); // 全局缓存
 var messageInput = document.getElementById('messageInput'); // 全局缓存
-
+var userList = []
 let pageVisibility = true
 let unreadMessageCount = 0
-let menuShow = false
+let settingMenuShow = false
+let userListMenuShow = false
 var createChatRoomBtn = document.getElementById('create-room'); // 全局缓存
 var unLoginBtn = document.getElementById('un-login'); // 全局缓存
 var profileBtn = document.getElementById('profile-btn'); // 全局缓存
@@ -22,6 +23,7 @@ function goProfile() {
 
 function init() {
     initPopupMenu()
+    initUserList()
     messageInput.addEventListener('keydown', function (event) {
         if (!event.isComposing && event.key === 'Enter') {
             event.preventDefault(); // Prevent form submission
@@ -96,8 +98,29 @@ function init() {
     connectToChatRoom(chatRoom);
 }
 
-function initPopupMenu() {
+function initUserList() {
+    userListMenu = document.getElementById("drop-user-list")
+    userCountBtn = document.getElementById("userCount")
+    userCountBtn.addEventListener('click', function () {
+        if (userListMenuShow) {
+            userListMenu.style.display = 'none';
+            userListMenuShow = !userListMenuShow
+            return
+        }
+        userListMenuShow = !userListMenuShow
+        userListMenu.style.display = 'block';
+        Popper.createPopper(userCountBtn, userListMenu, {
+            placement: 'bottom-start',
+        });
+    })
+    document.addEventListener('click', function (event) {
+        if (event.target !== userCountBtn) {
+            userListMenu.style.display = 'none';
+        }
+    });
+}
 
+function initPopupMenu() {
     createChatRoomBtn.addEventListener('click', createRoom);
     unLoginBtn.addEventListener('click', goLoginPage);
     profileBtn.addEventListener('click', goProfile);
@@ -105,12 +128,12 @@ function initPopupMenu() {
     var button = document.getElementById('menu-button');
     var menu = document.getElementById('drop-menu');
     button.addEventListener('click', function () {
-        if (menuShow) {
+        if (settingMenuShow) {
             menu.style.display = 'none';
-            menuShow = !menuShow
+            settingMenuShow = !settingMenuShow
             return
         }
-        menuShow = !menuShow
+        settingMenuShow = !settingMenuShow
         menu.style.display = 'block';
         Popper.createPopper(button, menu, {
             placement: 'bottom-end',
@@ -461,6 +484,22 @@ function handleMessage(message) {
     } else if (message.type === "roomList") {
         console.log("roomList", message.data)
         handleRoomList(message.data)
+    } else if (message.type === "userList") {
+        handleUserList(message.data)
+    }
+}
+
+function handleUserList(userList) {
+    console.log("userList", userList)
+    const userElement = document.getElementById("drop-user-list")
+    userElement.innerHTML = ""
+    for (let i = 0; i < userList.length; i++) {
+        const user = userList[i]
+        const userDiv = document.createElement("button")
+        userDiv.classList.add("user-item")
+        userDiv.textContent = user
+        userElement.appendChild(userDiv)
+        // userElement.appendChild(document.createElement("br"))
     }
 }
 
@@ -479,9 +518,7 @@ function getOkTimeText(currentDate, time) {
     }
     let yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1); // Set to "yesterday"
-
     let givenDate = new Date(time);
-
     if (givenDate.getFullYear() === yesterday.getFullYear() &&
         givenDate.getMonth() === yesterday.getMonth() &&
         givenDate.getDate() === yesterday.getDate()) {

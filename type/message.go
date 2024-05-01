@@ -27,6 +27,7 @@ const (
 	NoticeMsg    MsgType = "notice"    // 房间通知消息
 	RoomListMsg  MsgType = "roomList"  // 房间列表变动消息
 	UserCountMsg MsgType = "userCount" // 用户数量变动消息
+	UserListMsg  MsgType = "userList"  // 用户列表变动消息
 )
 
 type (
@@ -76,6 +77,17 @@ func NewRoomListMessage(roomList []string) Message {
 		Type: RoomListMsg,
 		ExtPart: ExtPart{
 			Data: roomList,
+		},
+	}
+	m.Wrap()
+	return m
+}
+
+func NewUserListMessage(userList []string) Message {
+	m := Message{
+		Type: UserListMsg,
+		ExtPart: ExtPart{
+			Data: userList,
 		},
 	}
 	m.Wrap()

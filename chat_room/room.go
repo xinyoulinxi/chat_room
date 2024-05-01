@@ -60,6 +60,7 @@ func (h *Room) onClientLeave(c *Client) {
 	h.unregister <- c
 	h.broadRoomUserCountMessage(count - 1)
 	h.BroadCast(chat_type.NewNoticeMessage(c.UserName + "离开聊天室"))
+	h.BroadCast(chat_type.NewUserListMessage(h.getUserList()))
 }
 
 // UserJoin 将用户加入房间
@@ -71,6 +72,16 @@ func (h *Room) UserJoin(conn *websocket.Conn, user *chat_type.User) {
 	h.register <- client
 	h.broadRoomUserCountMessage(count + 1)
 	h.BroadCast(chat_type.NewNoticeMessage(user.UserName + "加入聊天室"))
+	h.BroadCast(chat_type.NewUserListMessage(h.getUserList()))
+}
+
+func (h *Room) getUserList() []string {
+	// 将h.clients转换成用户列表
+	userList := make([]string, 0, len(h.clients))
+	for client := range h.clients {
+		userList = append(userList, client.UserName)
+	}
+	return userList
 }
 
 func (h *Room) broadRoomUserCountMessage(count int) {
@@ -101,7 +112,7 @@ func (h *Room) serve() {
 			}
 			if len(h.clients) == 0 {
 				slog.Warn("room is empty", "roomName", h.RoomName)
-				RemoveChatRoom(h.RoomName)
+				//RemoveChatRoom(h.RoomName)
 			}
 		case message := <-h.broadcast:
 			if h.Messages.Append(message) {
