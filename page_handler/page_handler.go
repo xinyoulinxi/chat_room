@@ -16,7 +16,7 @@ import (
 )
 
 func indexHandler(w http.ResponseWriter, r *http.Request) {
-	http.ServeFile(w, r, "pages/index.html")
+	http.ServeFile(w, r, "pages/login.html")
 }
 
 func sumHandler(w http.ResponseWriter, r *http.Request) {
@@ -83,8 +83,16 @@ func StartWebServer() {
 		slog.Info("route page to login")
 		http.ServeFile(w, r, "pages/login.html")
 	})))
+
+	// profile
+	mux.Handle("/profile", utils.NormalCacheMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		slog.Info("route page to profile")
+		http.ServeFile(w, r, "pages/profile.html")
+	})))
+
 	// login
 	mux.HandleFunc("/login_user", user.LoginHandler)
+
 	// upload file
 	mux.HandleFunc("/upload_file", chat_room.UploadFileHandler)
 
@@ -99,6 +107,9 @@ func StartWebServer() {
 
 	// update avatar
 	mux.HandleFunc("/update_avatar", user.UpdateUserAvatarHandler)
+
+	// update profile
+	mux.HandleFunc("/update_profile", user.UpdateProfileHandler)
 
 	// Chat Room
 	mux.Handle("/chat_room", utils.NormalCacheMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

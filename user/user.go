@@ -83,6 +83,73 @@ func GetUserAvatarHandler(w http.ResponseWriter, r *http.Request) {
 	utils.WriteResponseWithData(w, chat_type.ErrorCodeSuccess, "success", jsonData)
 }
 
+func UpdateProfileHandler(w http.ResponseWriter, r *http.Request) {
+	// 确保关闭请求体
+	defer r.Body.Close()
+	// 检查请求方法是否为POST
+	if r.Method != http.MethodPost {
+		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// 解析请求体
+	var profileData struct {
+		Id          string `json:"id"`
+		Username    string `json:"username"`
+		Password    string `json:"password"`
+		NewUsername string `json:"newUsername"`
+		NewPassword string `json:"newPassword"`
+	}
+
+	err := json.NewDecoder(r.Body).Decode(&profileData)
+	if err != nil {
+		utils.WriteResponse(w, chat_type.ErrorCodeFail, "Failed to parse request body")
+		return
+	}
+	slog.Info("UpdateProfileHandler", "profileData", profileData)
+	userName := profileData.Username
+	passWord := profileData.Password
+	newName := profileData.NewUsername
+	newPass := profileData.NewPassword
+
+	slog.Info("LoginHandler", "username", userName, "password", passWord)
+	if userName == "" || passWord == "" || newName == "" || newPass == "" {
+		utils.WriteResponse(w, chat_type.ErrorInvalidInput, "Blank input")
+		return
+	}
+
+	if newName == userName && newPass == passWord {
+		utils.WriteResponse(w, chat_type.ErrorCodeFail, "No change")
+		return
+	}
+	if !CheckPassword(userName, passWord) {
+		utils.WriteResponse(w, chat_type.ErrorInvalidPassword, "Invalid password")
+		return
+	}
+
+	if !UserExist(userName) {
+		utils.WriteResponse(w, chat_type.ErrorUserNotExist, "User not exist")
+		return
+	}
+
+	// 返回整个user结构体
+	user := getUserByName(userName)
+	if user == nil {
+		utils.WriteResponse(w, chat_type.ErrorCodeFail, "Failed to get user")
+		return
+	}
+
+	if user.UserName != userName || user.PassWord != passWord {
+		utils.WriteResponse(w, chat_type.ErrorCodeFail, "Wrong password or username")
+		return
+	}
+
+	user.UserName = newName
+	user.PassWord = newPass
+	saveUserInfosToLocalFile()
+	utils.WriteResponse(w, chat_type.ErrorCodeSuccess, user.UserID)
+}
+
 func UpdateUserAvatarHandler(w http.ResponseWriter, r *http.Request) {
 	id := r.URL.Query().Get("id")
 	avatarUrl := r.URL.Query().Get("url")
@@ -110,6 +177,7 @@ func saveUserInfosToLocalFile() {
 		return
 	}
 }
+
 func getUserByName(userName string) *chat_type.User {
 	for _, user := range userList {
 		if user.UserName == userName {

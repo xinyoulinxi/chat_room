@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Profile</title>
+    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+    <style>
+
+    </style>
+    <link href="/pages/css/login.css" rel="stylesheet">
+    <link href="/pages/thirdparty/toastify.min.css" rel="stylesheet" type="text/css"></link>
+    <link href="/pages/thirdparty/fancybox.min.css" rel="stylesheet" type="text/css"></link>
+    <link href="/pages/css/chat.css" rel="stylesheet" type="text/css">
+    <script src="/pages/thirdparty/sweetalert.js"></script>
+    <script src="/pages/thirdparty/jquery.min.js"></script>
+    <script src="/pages/thirdparty/fancybox.min.js"></script>
+    <script src="/pages/thirdparty/toastify.js"></script>
+    <script src="/pages/js/utils.js"></script>
+</head>
+
+<body>
+<div class="container">
+    <h1 class="title">PROFILE</h1>
+    <div class="input-group">
+        <input id="usernameInput" name="usernameInput" placeholder="用户名" type="text">
+    </div>
+    <div class="input-group">
+        <input id="userPasswordInput" name="userPasswordInput" placeholder="密码" type="password">
+    </div>
+
+    <div class="input-group">
+        <input id="newUsernameInput" name="newUsernameInput" placeholder="新的用户名" type="text">
+    </div>
+    <div class="input-group">
+        <input id="newUserPasswordInput" name="newUserPasswordInput" placeholder="新的密码" type="password">
+    </div>
+    <div class="input-group">
+        <input id="newUserPasswordInputConfirm" name="newUserPasswordInputConfirm" placeholder="确认新的密码"
+               type="password">
+    </div>
+
+    <button onclick="saveProfile()">保存</button>
+</div>
+<script src="/pages/js/profile.js"></script>
+<script>
+    window.addEventListener('DOMContentLoaded', function () {
+        document.getElementById('usernameInput').value = localStorage.getItem("username");
+        document.getElementById('userPasswordInput').value = localStorage.getItem("password");
+    });
+</script>
+</body>
+</html>

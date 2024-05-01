@@ -1,9 +1,7 @@
 
-// Establish a WebSocket connection
-var params = new URLSearchParams(window.location.search);
 var userId = getCookie("userId")
 var userName = getCookie("userName")
-var chatRoom = params.get("chatroom")
+var chatRoom = localStorage.getItem("chatRoom");
 var socket = null;
 var messageDisplay = document.getElementById('messageDisplay'); // 全局缓存
 var messageInput = document.getElementById('messageInput'); // 全局缓存
@@ -13,17 +11,17 @@ let unreadMessageCount = 0
 let menuShow = false
 var createChatRoomBtn = document.getElementById('create-room'); // 全局缓存
 var unLoginBtn = document.getElementById('un-login'); // 全局缓存
+var profileBtn = document.getElementById('profile-btn'); // 全局缓存
 var helpBtn = document.getElementById('help'); // 全局缓存
 
 init()
 
+function goProfile() {
+    window.location.href = "/profile";
+}
 
 function init() {
     initPopupMenu()
-
-    createChatRoomBtn.addEventListener('click', createRoom);
-    unLoginBtn.addEventListener('click', goLoginPage);
-
     messageInput.addEventListener('keydown', function (event) {
         if (!event.isComposing && event.key === 'Enter') {
             event.preventDefault(); // Prevent form submission
@@ -95,10 +93,15 @@ function init() {
     })
     // Focus on the message input field
     messageInput.focus();
-    connectToChatRoom();
+    connectToChatRoom(chatRoom);
 }
 
 function initPopupMenu() {
+
+    createChatRoomBtn.addEventListener('click', createRoom);
+    unLoginBtn.addEventListener('click', goLoginPage);
+    profileBtn.addEventListener('click', goProfile);
+
     var button = document.getElementById('menu-button');
     var menu = document.getElementById('drop-menu');
     button.addEventListener('click', function () {
@@ -223,13 +226,11 @@ function handleRoomList(chatRoomList) {
     select.innerHTML = ""; // 仅清空select内部，避免重复创建select元素
     select.classList.add('select-text-selected');
     select.onchange = function () {
-        chatRoom = this.value;
-        connectToChatRoom();
+        connectToChatRoom(this.value);
     };
     if (chatRoom == null || chatRoom === "" || isChatRoomExist(chatRoom, chatRoomList) === false) {
         showToast("当前聊天室不存在，已自动切换到第一个聊天室")
-        chatRoom = chatRoomList[0];
-        connectToChatRoom();
+        connectToChatRoom(chatRoomList[0]);
     }
 
     // 将select设置为当前chatroom的值
@@ -539,7 +540,7 @@ function initSocket() {
             console.log("socket close")
             setTimeout(function () {
                 showToast("连接断开，尝试重新连接...", {duration: 3000});
-                connectToChatRoom();
+                connectToChatRoom(chatRoom);
             }, 5000);
         }
     };
@@ -555,8 +556,7 @@ function createRoom() {
             .then(data => {
                 if (data.errorCode === 0) {
                     showToast("聊天室创建成功");
-                    chatRoom = roomName;
-                    connectToChatRoom();
+                    connectToChatRoom(roomName);
                 } else {
                     showToast(data.message);
                 }
@@ -575,8 +575,10 @@ function goLoginPage() {
     window.location.href = "/login";
 }
 
-function connectToChatRoom() {
+function connectToChatRoom(room) {
     // Check if the userId or room number is empty
+    chatRoom = room;
+    localStorage.setItem("chatRoom", chatRoom);
     if (userId == null || userId === "" || chatRoom == null || chatRoom === "") {
         showToast('请登录并选择聊天室后再进入');
         sleep(500).then(() => {
@@ -700,20 +702,6 @@ function getNormalMessage(message) {
         }
     }
     return messageElement
-}
-
-function showToast(text, duration = 2000) {
-    Toastify({
-        text: text,
-        duration: duration, // Toast 持续显示的时间（毫秒）
-        close: false, // 是否显示关闭按钮
-        gravity: "top", // Toast 出现的位置，可以是 "top" 或 "bottom"
-        position: 'center', // Toast 水平方向的位置，可以是 "left", "center", 或 "right"
-        backgroundColor: "linear-gradient(to right, #00b09b, #96c93d)", // 背景色
-        className: "chat-toast", // 自定义类名，用于添加特定的样式
-        onClick: function () {
-        } // 点击 Toast 时执行的函数
-    }).showToast();
 }
 
 function sendFile() {

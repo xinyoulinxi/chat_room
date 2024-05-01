@@ -56,6 +56,17 @@ input[type="text"] {
     border-radius: 4px;
 }
 
+input[type="password"] {
+    flex-grow: 1;
+    /* Allows input to take up the rest of the space in the input group */
+    padding: 10px;
+    box-sizing: border-box;
+    border: 1px solid #ccc;
+    font-size: 16px;
+    min-width: 320px;
+    min-height: 36px;
+    border-radius: 4px;
+}
 button {
     font-size: 20px;
     padding: 10px 20px;

@@ -35,20 +35,6 @@ function getInput(title, showCancelButton, callback) {
     });
 }
 
-function showToast(text) {
-    Toastify({
-        text: text,
-        duration: 2000, // Toast 持续显示的时间（毫秒）
-        close: false, // 是否显示关闭按钮
-        gravity: "top", // Toast 出现的位置，可以是 "top" 或 "bottom"
-        position: 'center', // Toast 水平方向的位置，可以是 "left", "center", 或 "right"
-        backgroundColor: "linear-gradient(to right, #00b09b, #96c93d)", // 背景色
-        className: "chat-toast", // 自定义类名，用于添加特定的样式
-        onClick: function () {
-        } // 点击 Toast 时执行的函数
-    }).showToast();
-}
-
 function initRoomList() {
     // 访问服务器，通过room_list接口获取房间列表
     fetch('/room_list')
@@ -164,12 +150,4 @@ function login() {
             }
         })
         .catch(error => console.error('Error:', error));
-}
-
-function goToChatRoom(userid, username, chatRoom) {
-    // 设置userId 和 username到cookie中
-    addCookie("userId", userid)
-    addCookie("userName", username)
-    var url =
-        window.location.href = '/chat_room?' + 'chatroom=' + encodeURIComponent(chatRoom);
 }

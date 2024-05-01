@@ -229,7 +229,8 @@
     margin-right: 10px;
     font-size: 16px;
 }
-.create-room-btn {
+
+.drop-menu-btn {
     flex-grow: 0;
     color: black;
     font-weight: bold;
@@ -239,6 +240,10 @@
     padding: 8px;
     margin: 10px;
     /*background-color: #95EC69;*/
+}
+
+.drop-menu-btn:hover {
+    background-color: lightgray;
 }
 
 
