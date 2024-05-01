@@ -2,8 +2,11 @@
 var chatRoom = ""
 var username = ""
 var password = ""
-initRoomList()
+init()
 
+function init() {
+    initRoomList()
+}
 function getInput(title, showCancelButton, callback) {
     Swal.fire({
         title: title,
@@ -63,6 +66,13 @@ function initRoomList() {
                 return
             }
             chatRoom = roomListData[0]
+            // 自动登录
+            // if(getCookie("userId") !== "" && getCookie("userName") !== ""){
+            //     var userid = getCookie("userId")
+            //     var username = getCookie("userName")
+            //     goToChatRoom(userid, username, chatRoom)
+            //     return
+            // }
             select.onchange = function () {
                 chatRoom = this.value;
             };
@@ -118,10 +128,6 @@ function register() {
     doRegister(username, password)
 }
 
-function enterChatRoom(username, chatRoom) {
-
-}
-
 function login() {
     var username = document.getElementById('usernameInput').value;
     var password = document.getElementById('passwordInput').value;
@@ -165,5 +171,5 @@ function goToChatRoom(userid, username, chatRoom) {
     addCookie("userId", userid)
     addCookie("userName", username)
     var url =
-        window.location.href = '/chat_room?' + 'chatroom="+encodeURIComponent(chatRoom)';
+        window.location.href = '/chat_room?' + 'chatroom=' + encodeURIComponent(chatRoom);
 }

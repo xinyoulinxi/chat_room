@@ -10,9 +10,20 @@ var messageInput = document.getElementById('messageInput'); // 全局缓存
 
 let pageVisibility = true
 let unreadMessageCount = 0
+let menuShow = false
+var createChatRoomBtn = document.getElementById('create-room'); // 全局缓存
+var unLoginBtn = document.getElementById('un-login'); // 全局缓存
+var helpBtn = document.getElementById('help'); // 全局缓存
+
 init()
 
+
 function init() {
+    initPopupMenu()
+
+    createChatRoomBtn.addEventListener('click', createRoom);
+    unLoginBtn.addEventListener('click', goLoginPage);
+
     messageInput.addEventListener('keydown', function (event) {
         if (!event.isComposing && event.key === 'Enter') {
             event.preventDefault(); // Prevent form submission
@@ -87,6 +98,28 @@ function init() {
     connectToChatRoom();
 }
 
+function initPopupMenu() {
+    var button = document.getElementById('menu-button');
+    var menu = document.getElementById('drop-menu');
+    button.addEventListener('click', function () {
+        if (menuShow) {
+            menu.style.display = 'none';
+            menuShow = !menuShow
+            return
+        }
+        menuShow = !menuShow
+        menu.style.display = 'block';
+        Popper.createPopper(button, menu, {
+            placement: 'bottom-end',
+        });
+    });
+
+    document.addEventListener('click', function (event) {
+        if (event.target !== button) {
+            menu.style.display = 'none';
+        }
+    });
+}
 /**
  * 发送浏览器通知
  * @param title 标题
@@ -530,6 +563,12 @@ function createRoom() {
             });
     });
 
+}
+
+function unLogin() {
+    document.cookie = "userId=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    document.cookie = "userName=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    goLoginPage()
 }
 
 function goLoginPage() {

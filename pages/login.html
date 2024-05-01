@@ -22,28 +22,29 @@
 </head>
 
 <body>
-    <div class="container">
-        <h1 class="title">SAME CHAT ROOM</h1>
+<div class="container">
+    <h1 class="title">SAME CHAT ROOM</h1>
 
-        <div class="input-group">
-            <input type="text" id="usernameInput" name="usernameInput" placeholder="用户名">
-        </div>
-        <div class="input-group">
-            <input type="text" id="passwordInput" name="userPasswordInput" placeholder="密码">
-        </div>
-        <div style="display: flex;">
-            <div id="roomList" class="roomList"></div>
-        </div>
-        <button onclick="login()">登录</button>
-        <button onclick="register()">注册并登录</button>
+    <div class="input-group">
+        <input id="usernameInput" name="usernameInput" placeholder="用户名" type="text">
     </div>
-    <script src="/pages/js/login.js"></script>
-    <script>
-        window.addEventListener('DOMContentLoaded',function () {
-            document.getElementById('usernameInput').value = localStorage.getItem("username");
-            document.getElementById('passwordInput').value = localStorage.getItem("password");
-        });
-    </script>
+    <div class="input-group">
+        <input id="passwordInput" name="userPasswordInput" placeholder="密码" type="text">
+    </div>
+    <div style="display: flex;width: 80%;">
+        <div class="chat-room-intro">聊天室：</div>
+        <div id="roomList"></div>
+    </div>
+    <button onclick="login()">登录</button>
+    <button onclick="register()">注册并登录</button>
+</div>
+<script src="/pages/js/login.js"></script>
+<script>
+    window.addEventListener('DOMContentLoaded', function () {
+        document.getElementById('usernameInput').value = localStorage.getItem("username");
+        document.getElementById('passwordInput').value = localStorage.getItem("password");
+    });
+</script>
 </body>
 
 </html>

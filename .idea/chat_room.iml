@@ -9,5 +9,6 @@
     <orderEntry type="library" name="jquery.fancybox" level="application" />
     <orderEntry type="library" name="jquery" level="application" />
     <orderEntry type="library" name="sweetalert2" level="application" />
+    <orderEntry type="library" name="@popperjs" level="application" />
   </component>
 </module>
