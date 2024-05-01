@@ -59,6 +59,7 @@ func (h *Room) onClientLeave(c *Client) {
 	count := len(h.clients)
 	h.unregister <- c
 	h.broadRoomUserCountMessage(count - 1)
+	h.BroadCast(chat_type.NewNoticeMessage(c.UserName + "离开聊天室"))
 }
 
 // UserJoin 将用户加入房间
@@ -69,6 +70,7 @@ func (h *Room) UserJoin(conn *websocket.Conn, user *chat_type.User) {
 	count := len(h.clients)
 	h.register <- client
 	h.broadRoomUserCountMessage(count + 1)
+	h.BroadCast(chat_type.NewNoticeMessage(user.UserName + "加入聊天室"))
 }
 
 func (h *Room) broadRoomUserCountMessage(count int) {

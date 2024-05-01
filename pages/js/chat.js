@@ -397,6 +397,7 @@ function getFileMessageElement(message) {
 }
 
 function displayMessage(message) {
+    // console.log("display message", message)
     insertSendTime(message)
     switch (message.type) {
         case "notice":
@@ -476,8 +477,14 @@ function getOkTimeText(currentDate, time) {
     if (currentDate.getDate() === new Date(time).getDate()) {
         return time.substring(11, 16);
     }
-    // 昨天显示昨天加时间
-    if (currentDate.getDate() === new Date().getDate() - 1) {
+    let yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1); // Set to "yesterday"
+
+    let givenDate = new Date(time);
+
+    if (givenDate.getFullYear() === yesterday.getFullYear() &&
+        givenDate.getMonth() === yesterday.getMonth() &&
+        givenDate.getDate() === yesterday.getDate()) {
         return "昨天 " + time.substring(11, 16);
     }
     return time.substring(0, 16);
@@ -485,7 +492,7 @@ function getOkTimeText(currentDate, time) {
 
 var lastTime = ""; // "2024-11-12 00:00:00"
 // 判断当前的time是否需要显示时间，如果需要则返回time，否则返回""，并更新lastTime
-function getTimeInterval(time) {
+function getTimeInterval(time, isNotice) {
     var currentDate = new Date();
     if (lastTime === "" || lastTime.search("年") !== -1) {
         lastTime = time;
@@ -498,15 +505,17 @@ function getTimeInterval(time) {
         // 如果是今天的消息，不显示年月日，只显示时分
         return getOkTimeText(currentDate, time);
     }
-
+    if (isNotice) {
+        return getOkTimeText(currentDate, time);
+    }
     return "";
 }
 
 
 function insertSendTime(message) {
-    const time = getTimeInterval(message.sendTime);
+    const time = getTimeInterval(message.sendTime, message.type === "notice");
     if (time === "") {
-        return;
+        return
     }
     const timeElement = document.createElement('div');
     timeElement.classList.add("message-time-text")
