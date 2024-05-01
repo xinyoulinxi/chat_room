@@ -2,10 +2,9 @@
 var chatRoom = ""
 var username = ""
 var password = ""
-var userid = ""
 initRoomList()
 
-function getInput(title,showCancelButton, callback) {
+function getInput(title, showCancelButton, callback) {
     Swal.fire({
         title: title,
         input: 'text',
@@ -42,7 +41,8 @@ function showToast(text) {
         position: 'center', // Toast 水平方向的位置，可以是 "left", "center", 或 "right"
         backgroundColor: "linear-gradient(to right, #00b09b, #96c93d)", // 背景色
         className: "chat-toast", // 自定义类名，用于添加特定的样式
-        onClick: function () { } // 点击 Toast 时执行的函数
+        onClick: function () {
+        } // 点击 Toast 时执行的函数
     }).showToast();
 }
 
@@ -59,7 +59,7 @@ function initRoomList() {
             // Create a select element
             var select = document.createElement('select');
             select.classList.add('select-text');
-            if(roomListData == null || roomListData.length === 0) {
+            if (roomListData == null || roomListData.length === 0) {
                 return
             }
             chatRoom = roomListData[0]
@@ -100,9 +100,9 @@ function doRegister() {
             if (data.errorCode !== 0) {
                 showToast(data.message);
             } else {
-                userid = data.message
+                var userid = data.message
                 // 注册成功，跳转到聊天室页面
-                goToChatRoom(userid,username,chatRoom);
+                goToChatRoom(userid, username, chatRoom);
             }
         })
         .catch(error => console.error('Error:', error));
@@ -115,20 +115,22 @@ function register() {
         showToast("用户名和密码不能为空，请重新输入");
         return;
     }
-    doRegister(username,password)
+    doRegister(username, password)
 }
+
 function enterChatRoom(username, chatRoom) {
 
 }
+
 function login() {
     var username = document.getElementById('usernameInput').value;
     var password = document.getElementById('passwordInput').value;
-    console.log("username:"+username+" password:"+password)
+    console.log("username:" + username + " password:" + password)
     if (username === '' || password === '') {
         showToast("用户名和密码不能为空，请重新输入");
         return;
     }
-    if(chatRoom == null || chatRoom === ""){
+    if (chatRoom == null || chatRoom === "") {
         chatRoom = "default"
     }
     // 访问服务器，通过login接口验证用户名和密码
@@ -150,16 +152,18 @@ function login() {
             } else {
                 localStorage.setItem("username", username);
                 localStorage.setItem("password", password);
-                userid = data.message
+                var userid = data.message
                 // 登录成功，跳转到聊天室页面
-                goToChatRoom(userid,username,chatRoom);
+                goToChatRoom(userid, username, chatRoom);
             }
         })
         .catch(error => console.error('Error:', error));
 }
 
-function goToChatRoom(userid,username,chatRoom){
-    console.log("userid:"+userid+" chatRoom:"+chatRoom+" username:"+username)
-    var url = '/chat_room?userid=' + encodeURIComponent(userid)+"&chatroom="+encodeURIComponent(chatRoom)+"&username="+encodeURIComponent(username);
-    window.location.href = url;
+function goToChatRoom(userid, username, chatRoom) {
+    // 设置userId 和 username到cookie中
+    addCookie("userId", userid)
+    addCookie("userName", username)
+    var url =
+        window.location.href = '/chat_room?' + 'chatroom="+encodeURIComponent(chatRoom)';
 }

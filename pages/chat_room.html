@@ -25,38 +25,40 @@
             /* 视口宽度 */
         }
     </style>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-    <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.css" />
-    <script src="https://cdn.bootcdn.net/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
-    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="stylesheet" href="/pages/css/chat.css">
+    <link href="/pages/thirdparty/toastify.min.css" rel="stylesheet"></link>
+    <link href="/pages/thirdparty/fancybox.min.css" rel="stylesheet"></link>
+    <link href="/pages/css/chat.css" rel="stylesheet">
+
+    <script src="/pages/thirdparty/sweetalert.js"></script>
+    <script src="/pages/thirdparty/jquery.min.js"></script>
+    <script src="/pages/thirdparty/fancybox.min.js"></script>
+    <script src="/pages/thirdparty/toastify.js"></script>
+    <script src="/pages/js/utils.js"></script>
 </head>
 
 <body>
-    <div class="container">
-        <div style="display: flex; background-color: #F5F5F5; width: 100%; align-items: center;">
-            <div id="roomList" class="room-list"></div>
-            <div id="userCount" class="user-count"></div>
-            <button id="creatRoomBtn" class="create-room-btn" onclick="createRoom()">创建聊天室</button>
-        </div>
-        <div class="chat-container">
-            <div id="messageDisplay" class="chat-content">
-                <!-- Your messages go here -->
-            </div>
-        </div>
-        <div class="chat-inputs">
-            <label class="file-upload">
-                <button class="send-img-button">+</button>
-                <input type="file" class="file-input" id="image-select" onchange="sendFile()">
-            </label>
-            <input type="text" class="input-container" id="messageInput" placeholder="输入消息">
-            <button onclick="sendMessage()" class="send-btn">发送(Enter)</button>
+<div class="container">
+    <div style="display: flex; background-color: #F5F5F5; width: 100%; align-items: center;">
+        <div class="room-list" id="roomList"></div>
+        <div class="user-count" id="userCount"></div>
+        <button class="create-room-btn" id="creatRoomBtn" onclick="createRoom()">创建聊天室</button>
+    </div>
+    <div class="chat-container">
+        <div class="chat-content" id="messageDisplay">
+            <!-- Your messages go here -->
         </div>
     </div>
-    <script src="/pages/js/chat.js"></script>
+    <div class="chat-inputs">
+        <label class="file-upload">
+            <button class="send-img-button">+</button>
+            <input class="file-input" id="image-select" onchange="sendFile()" type="file">
+        </label>
+        <input class="input-container" id="messageInput" placeholder="输入消息" type="text">
+        <button class="send-btn" onclick="sendMessage()">发送(Enter)</button>
+    </div>
+</div>
+<script src="/pages/js/chat.js"></script>
 </body>
 
 </html>

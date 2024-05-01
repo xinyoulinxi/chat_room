@@ -1,7 +1,8 @@
+
 // Establish a WebSocket connection
 var params = new URLSearchParams(window.location.search);
-var userId = params.get("userid")
-var userName = params.get("username")
+var userId = getCookie("userId")
+var userName = getCookie("userName")
 var chatRoom = params.get("chatroom")
 var socket = null;
 var messageDisplay = document.getElementById('messageDisplay'); // 全局缓存
@@ -366,26 +367,26 @@ function displayMessage(message) {
     switch (message.type) {
         case "notice":
             displayNoticeElement(message)
-            if (!pageVisibility){
+            if (!pageVisibility) {
                 browserNotify(`[${chatRoom}]房间通知`, message.content)
             }
             break;
         case "image":
             displayProfileElement(message, getImageMessageElement(message))
-            if (!pageVisibility){
+            if (!pageVisibility) {
                 browserNotify(`[${chatRoom}]${message.userName}`, "发送了一张图片")
             }
             break;
         case "file":
             displayProfileElement(message, getFileMessageElement(message))
             displayDownloadElement(message)
-            if (!pageVisibility){
-                browserNotify(`[${chatRoom}]${message.userName}`,"上传了一个文件")
+            if (!pageVisibility) {
+                browserNotify(`[${chatRoom}]${message.userName}`, "上传了一个文件")
             }
             break;
         case "text":
             displayProfileElement(message, getNormalMessage(message))
-            if (!pageVisibility){
+            if (!pageVisibility) {
                 browserNotify(`[${chatRoom}]${message.userName}`, message.content)
             }
             break;
@@ -539,7 +540,10 @@ function connectToChatRoom() {
     // Check if the userId or room number is empty
     if (userId == null || userId === "" || chatRoom == null || chatRoom === "") {
         showToast('请登录并选择聊天室后再进入');
-        goLoginPage()
+        sleep(500).then(() => {
+                goLoginPage()
+            }
+        )
         return;
     }
     // clear the message display
