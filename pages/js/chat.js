@@ -539,15 +539,15 @@ function getOkTimeText(currentDate, time) {
 var lastTime = ""; // "2024-11-12 00:00:00"
 // 判断当前的time是否需要显示时间，如果需要则返回time，否则返回""，并更新lastTime
 function getTimeInterval(time, isNotice) {
-    var currentDate = new Date(time);
+    var currentDate = new Date();
     if (lastTime === "") {
         lastTime = time;
         return getOkTimeText(currentDate, time)
     }
+    var messageData = new Date(time)
     var lastDate = new Date(lastTime);
-    var interval = currentDate - lastDate;
+    var interval = messageData - lastDate;
     if (interval > 1000 * 60 * 3) {
-        // console.log("interval", interval, lastTime, time)
         lastTime = time;
         return getOkTimeText(currentDate, time);
     }
