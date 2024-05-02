@@ -143,26 +143,27 @@ func (m *Messages) LastN(n int) []Message {
 	}
 }
 
-// IndexN 返回末尾index*n-n到index*n的消息，如果消息数量不足则返回剩下的消息
+// 输入index和n，index代表当前需要数组的倒数第index个长度为n的slice，返回这个slice。如果剩下的数量不足n，则返回剩下的
 func (m *Messages) IndexN(index int, n int) []Message {
-	index = len(*m)/n - index + 1
-	start := (index - 1) * n
-	slog.Info("IndexN", "start", start, "len", len(*m))
-	if start >= len(*m) {
-		return nil
+	length := len(*m)
+	if length < n && index == 0 {
+		return *m
 	}
+	start := length - (index+1)*n
 	end := start + n
-	if start < 0 && end > 0 {
-		return (*m)[0:end]
-	}
+	slog.Info("IndexN", "start", start, "len", len(*m))
 	if start < 0 {
+		if end > 0 {
+			return (*m)[0:end]
+		}
 		return nil
 	}
-	if end >= len(*m) {
+	if end > length {
 		return (*m)[start:]
 	}
 	return (*m)[start:end]
 }
+
 func (m *Messages) Serialize() ([]byte, error) {
 	bytes, err := json.Marshal(m)
 	if err != nil {

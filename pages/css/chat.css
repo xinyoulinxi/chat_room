@@ -29,7 +29,8 @@
 
 .message-bubble {
     display: inline-block;
-    max-width: 320px;
+    text-align: left;
+    max-width: 240px;
     font-size: 20px;
     padding: 10px;
     margin: 10px;
@@ -68,6 +69,7 @@
 .my-message {
     background-color: #95EC69;
     align-self: flex-end;
+    text-align: left;
 }
 
 .message-time-text{
@@ -163,9 +165,17 @@
     font-size: 24px;
 }
 
+.send-img-button:hover {
+    background-color: #999;
+}
+
 #imageInput {
     color: gray;
     font-size: 16px;
+}
+
+#imageInput:hover {
+    background-color: #73a5ff;
 }
 
 .input-container {
@@ -189,6 +199,10 @@
     height: 40px;
     margin-right: 10px;
     background-color: #95EC69;
+}
+
+.send-btn:hover {
+    background-color: #7FDB41;
 }
 .close {
     position: absolute;

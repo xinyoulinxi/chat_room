@@ -1,33 +1,35 @@
 var userId = getCookie("userId")
 var userName = getCookie("userName")
 var chatRoom = localStorage.getItem("chatRoom");
-var socket = null;
-var messageDisplay = document.getElementById('messageDisplay'); // 全局缓存
-var messageInput = document.getElementById('messageInput'); // 全局缓存
-var userList = []
-let pageVisibility = true
-let unreadMessageCount = 0
-let settingMenuShow = false
-let userListMenuShow = false
-var createChatRoomBtn = document.getElementById('create-room'); // 全局缓存
-var unLoginBtn = document.getElementById('un-login'); // 全局缓存
-var profileBtn = document.getElementById('profile-btn'); // 全局缓存
-var helpBtn = document.getElementById('help'); // 全局缓存
-var messageIndex = 0; // 全局缓存
-var hasMoreMessage = true; // 全局缓存
+var socket = null;// WebSocket
+var messageDisplay = document.getElementById('messageDisplay');// 消息显示区域
+var messageInput = document.getElementById('messageInput');// 消息输入框
+let pageVisibility = true// 页面是否可见
+let unreadMessageCount = 0// 未读消息计数
+let settingMenuShow = false// 设置菜单是否显示
+let userListMenuShow = false// 用户列表菜单是否显示
+var createChatRoomBtn = document.getElementById('create-room');// 创建聊天室按钮
+var unLoginBtn = document.getElementById('un-login');// 退出登录按钮
+var profileBtn = document.getElementById('profile-btn');// 个人中心按钮
+var helpBtn = document.getElementById('help');// 帮助按钮
+var messageIndex = 0;// 消息索引
+var hasMoreMessage = true;// 是否还有更多消息
 var hasLoadedHistory = false; // 是否已经加载过历史消息
-init()
 
-function goProfile() {
-    window.location.href = "/profile";
-}
+// 初始化
+init()
 
 function init() {
     initPopupMenu()
+    initUserListMenu()
     initListener()
     // Focus on the message input field
     messageInput.focus();
     connectToChatRoom(chatRoom);
+}
+
+function goProfile() {
+    window.location.href = "/profile";
 }
 
 function initListener() {
@@ -108,16 +110,16 @@ function initListener() {
     messageDisplay.addEventListener('touchmove', function (event) {
         // var currentTouchY = event.touches[0].clientY;
         if (messageDisplay.scrollTop === 0 && hasLoadedHistory) {
-            console.log('Element has been scrolled to the top');
             getHistoryMessages(false)
         }
     });
 }
 
-function initUserList() {
+function initUserListMenu() {
     userListMenu = document.getElementById("drop-user-list")
     userCountBtn = document.getElementById("userCount")
     userCountBtn.addEventListener('click', function () {
+        console.log("click user count", userListMenuShow)
         if (userListMenuShow) {
             userListMenu.style.display = 'none';
             userListMenuShow = !userListMenuShow
@@ -140,7 +142,7 @@ function initPopupMenu() {
     createChatRoomBtn.addEventListener('click', createRoom);
     unLoginBtn.addEventListener('click', unLogin);
     profileBtn.addEventListener('click', goProfile);
-
+    document.getElementById('update-avatar-btn').addEventListener('click', updateAvatar);
     var button = document.getElementById('menu-button');
     var menu = document.getElementById('drop-menu');
     button.addEventListener('click', function () {
@@ -202,6 +204,7 @@ function getHistoryMessages(isFirstFetch = true) {
             } else if (data.errorCode !== 0) {
                 showToast(data.message);
             } else {
+                console.log("getHistoryMessages success size:", data.data.length)
                 messageIndex++
                 if (isFirstFetch) {
                     data.data.forEach(message => {
@@ -220,33 +223,6 @@ function getHistoryMessages(isFirstFetch = true) {
             }
         })
         .catch(error => console.error('Error:', error));
-}
-
-function getInput(title, showCancelButton, callback) {
-    Swal.fire({
-        title: title,
-        input: 'text',
-        inputAttributes: {
-            autocapitalize: 'off'
-        },
-        confirmButtonText: '确认',
-        cancelButtonText: '取消',
-        showCancelButton: showCancelButton,
-        showLoaderOnConfirm: true,
-        preConfirm: (login) => {
-            // 可以在这里处理输入的数据，如发送到服务器
-            if (login == null || login === "") {
-                showToast("用户名不能为空，请重新输入");
-                return false;
-            }
-            return login; // 或者返回一个 promise
-        },
-        allowOutsideClick: () => false
-    }).then((result) => {
-        if (result.isConfirmed) {
-            callback(result.value)
-        }
-    });
 }
 
 function getRoomList() {
@@ -317,7 +293,7 @@ var avatar_map = new Map()
 
 function getAvatarUrl(userName, avatarElement) {
     if (avatar_map.has(userName)) {
-        console.log("use cache", userName, avatar_map.get(userName))
+        // console.log("use cache", userName, avatar_map.get(userName))
         avatarElement.src = avatar_map.get(userName)
         return
     }
@@ -381,11 +357,7 @@ function displayProfileElement(message, element, isAddToBottom) {
     avatar.className = 'avatar';
     getAvatarUrl(message.userName, avatar)
     avatar.onclick = function () {
-        if (message.userId === userId || message.userName === userName) {
-            updateAvatar()
-        } else {
-            showBigImage(this.src)
-        }
+        showBigImage(this.src)
     }
     // 创建文本容器
     const textContainer = document.createElement('div');
@@ -522,6 +494,7 @@ function handleMessage(message) {
     } else if (message.type === "roomList") {
         handleRoomList(message.data)
     } else if (message.type === "userList") {
+        console.log("userList", message.data)
         handleUserList(message.data)
     }
 }
@@ -566,17 +539,19 @@ function getOkTimeText(currentDate, time) {
 var lastTime = ""; // "2024-11-12 00:00:00"
 // 判断当前的time是否需要显示时间，如果需要则返回time，否则返回""，并更新lastTime
 function getTimeInterval(time, isNotice) {
-    var currentDate = new Date();
-    if (lastTime === "" || lastTime.search("年") !== -1) {
+    var currentDate = new Date(time);
+    if (lastTime === "") {
         lastTime = time;
         return getOkTimeText(currentDate, time)
     }
     var lastDate = new Date(lastTime);
     var interval = currentDate - lastDate;
-    if (interval > 1000 * 60 * 5) {
+    if (interval > 1000 * 60 * 3) {
+        // console.log("interval", interval, lastTime, time)
         lastTime = time;
         return getOkTimeText(currentDate, time);
     }
+    // console.log("interval", interval, lastTime, time)
     if (isNotice) {
         return getOkTimeText(currentDate, time);
     }
@@ -686,7 +661,6 @@ function tryConnectToChatRoom(callback) {
 }
 
 function connectToChatRoomInternal(room) {
-    initUserList()
     // Check if the userId or room number is empty
     chatRoom = room;
     localStorage.setItem("chatRoom", chatRoom);
@@ -712,6 +686,9 @@ function connectToChatRoom(room, isRetry = false) {
     messageIndex = 0
     hasMoreMessage = true
     hasLoadedHistory = false
+    settingMenuShow = false
+    userListMenuShow = false
+    // closeSocket()
     tryConnectToChatRoom(function () {
         connectToChatRoomInternal(room)
     })

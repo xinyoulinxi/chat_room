@@ -40,6 +40,32 @@ function sleep(time) {
     return new Promise((resolve) => setTimeout(resolve, time));
 }
 
+function getInput(title, showCancelButton, callback) {
+    Swal.fire({
+        title: title,
+        input: 'text',
+        inputAttributes: {
+            autocapitalize: 'off'
+        },
+        confirmButtonText: '确认',
+        cancelButtonText: '取消',
+        showCancelButton: showCancelButton,
+        showLoaderOnConfirm: true,
+        preConfirm: (login) => {
+            // 可以在这里处理输入的数据，如发送到服务器
+            if (login == null || login === "") {
+                showToast("用户名不能为空，请重新输入");
+                return false;
+            }
+            return login; // 或者返回一个 promise
+        },
+        allowOutsideClick: () => false
+    }).then((result) => {
+        if (result.isConfirmed) {
+            callback(result.value)
+        }
+    });
+}
 
 function goToChatRoom(userid, username, chatRoom) {
     // 设置userId 和 username到cookie中
