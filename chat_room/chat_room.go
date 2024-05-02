@@ -54,19 +54,20 @@ func HistoryMessagesHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 解析请求体
-	var loginData struct {
+	var requestData struct {
 		UserId   string `json:"userId"`
 		ChatRoom string `json:"chatRoom"`
+		Index    int    `json:"index"`
 		Count    int    `json:"count"`
 	}
 
-	err := json.NewDecoder(r.Body).Decode(&loginData)
+	err := json.NewDecoder(r.Body).Decode(&requestData)
 	if err != nil {
 		utils.WriteResponse(w, chat_type.ErrorCodeFail, "Failed to parse request body")
 		return
 	}
-	userId := loginData.UserId
-	roomName := loginData.ChatRoom
+	userId := requestData.UserId
+	roomName := requestData.ChatRoom
 
 	slog.Info("HistoryMessagesHandler", "userId", userId, "ChatRoom", roomName)
 	if userId == "" || roomName == "" {
@@ -82,12 +83,21 @@ func HistoryMessagesHandler(w http.ResponseWriter, r *http.Request) {
 		utils.WriteResponse(w, chat_type.ErrorInvalidInput, "Chat room not exist")
 		return
 	}
+	if requestData.Index < 0 {
+		utils.WriteResponse(w, chat_type.ErrorInvalidInput, "Invalid index")
+		return
+	}
 	chatRoom, _ := GetChatRoom(roomName)
-	count := loginData.Count
+	count := requestData.Count
 	if count <= 0 {
 		count = maxHistoryCount
 	}
-	messages := chatRoom.Messages.LastN(count)
+
+	messages := chatRoom.Messages.IndexN(requestData.Index, count)
+	if messages == nil {
+		utils.WriteResponse(w, chat_type.ErrorNoMoreMessages, "fail to fetch messages")
+		return
+	}
 	// 将chatRoom.Messages转换成json字符串
 	jsonMsg, err := json.Marshal(messages)
 	if err != nil {
@@ -95,7 +105,7 @@ func HistoryMessagesHandler(w http.ResponseWriter, r *http.Request) {
 		slog.Error("Failed to convert message to JSON", "error", err)
 		return
 	}
-	slog.Info("HistoryMessagesHandler", "messages size", len(messages))
+	slog.Info("HistoryMessagesHandler", "messagesSize", len(messages))
 	utils.WriteResponseWithData(w, chat_type.ErrorCodeSuccess, "Success", jsonMsg)
 }
 

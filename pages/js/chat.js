@@ -13,7 +13,9 @@ var createChatRoomBtn = document.getElementById('create-room'); // 全局缓存
 var unLoginBtn = document.getElementById('un-login'); // 全局缓存
 var profileBtn = document.getElementById('profile-btn'); // 全局缓存
 var helpBtn = document.getElementById('help'); // 全局缓存
-
+var messageIndex = 0; // 全局缓存
+var hasMoreMessage = true; // 全局缓存
+var hasLoadedHistory = false; // 是否已经加载过历史消息
 init()
 
 function goProfile() {
@@ -23,6 +25,8 @@ function goProfile() {
 function init() {
     initPopupMenu()
     initListener()
+    // Focus on the message input field
+    messageInput.focus();
     connectToChatRoom(chatRoom);
 }
 
@@ -96,8 +100,18 @@ function initListener() {
                 break;
         }
     })
-    // Focus on the message input field
-    messageInput.focus();
+    messageDisplay.addEventListener('scroll', function () {
+        if (messageDisplay.scrollTop === 0 && hasLoadedHistory) {
+            getHistoryMessages(false)
+        }
+    });
+    messageDisplay.addEventListener('touchmove', function (event) {
+        // var currentTouchY = event.touches[0].clientY;
+        if (messageDisplay.scrollTop === 0 && hasLoadedHistory) {
+            console.log('Element has been scrolled to the top');
+            getHistoryMessages(false)
+        }
+    });
 }
 
 function initUserList() {
@@ -166,7 +180,8 @@ function browserNotify(title, message) {
     // }
 }
 
-function getHistoryMessages() {
+function getHistoryMessages(isFirstFetch = true) {
+    console.log("getHistoryMessages", messageIndex, isFirstFetch)
     fetch('/history_messages', {
         method: 'POST',
         headers: {
@@ -174,21 +189,34 @@ function getHistoryMessages() {
         },
         body: JSON.stringify({
             userId: userId,
-            chatRoom: chatRoom
+            chatRoom: chatRoom,
+            index: messageIndex,
+            count: 100
         })
     })
         .then(response => response.json())
         .then(data => {
-            if (data.errorCode !== 0) {
+            if (data.errorCode === 8) {
+                hasMoreMessage = false
+                showToast("暂无更多消息")
+            } else if (data.errorCode !== 0) {
                 showToast(data.message);
             } else {
-                console.log("get history message size", data.data.length)
-                data.data.forEach(message => {
-                    handleMessage(message)
-                })
-                messageDisplay.scrollTop = messageDisplay.scrollHeight;
-                // Initialize the WebSocket connection
-                initSocket();
+                messageIndex++
+                if (isFirstFetch) {
+                    data.data.forEach(message => {
+                        handleMessage(message)
+                    })
+                    messageDisplay.scrollTop = messageDisplay.scrollHeight;
+                    hasLoadedHistory = true
+                } else {
+                    showToast("已加载更多消息")
+                    var scrollTop = messageDisplay.scrollHeight;
+                    for (var i = data.data.length - 1; i >= 0; i--) {
+                        handleHistoryMessage(data.data[i])
+                    }
+                    messageDisplay.scrollTop = messageDisplay.scrollHeight - scrollTop
+                }
             }
         })
         .catch(error => console.error('Error:', error));
@@ -295,7 +323,7 @@ function getAvatarUrl(userName, avatarElement) {
     }
     if (avatar_fetching.has(userName)) {
         avatar_fetching.get(userName).then(url => {
-            console.log("get avatar finish, use cache", userName, url)
+            // console.log("get avatar finish, use cache", userName, url)
             avatarElement.src = url;
         });
         return;
@@ -304,7 +332,7 @@ function getAvatarUrl(userName, avatarElement) {
         .then(response => response.json())
         .then(data => {
             if (data.errorCode === 0) {
-                console.log("fetch avatar by net success", userName, data.data)
+                // console.log("fetch avatar by net success", userName, data.data)
                 avatar_map.set(userName, data.data)
                 avatarElement.src = data.data
                 return data.data;
@@ -334,14 +362,14 @@ function updateAvatar() {
     });
 }
 
-function displayNoticeElement(message) {
+function displayNoticeElement(message, isAddToBottom) {
     const messageElement = document.createElement('div');
     messageElement.textContent = message.content
     messageElement.classList.add('message-notice-text')
-    messageDisplay.appendChild(messageElement)
+    addMessageToDisplay(messageElement, isAddToBottom)
 }
 
-function displayProfileElement(message, element) {
+function displayProfileElement(message, element, isAddToBottom) {
     // 创建最外层容器
     const container = document.createElement('div');
     container.classList.add('message-container');
@@ -393,10 +421,10 @@ function displayProfileElement(message, element) {
     if (isSelf) {
         container.appendChild(avatar);
     }
-    messageDisplay.appendChild(container)
+    addMessageToDisplay(container, isAddToBottom)
 }
 
-function displayDownloadElement(message) {
+function displayDownloadElement(message, isAddToBottom) {
     const downLoadElement = document.createElement('a');
     downLoadElement.download = message.content;
     downLoadElement.href = message.file;
@@ -407,7 +435,7 @@ function displayDownloadElement(message) {
     } else {
         downLoadElement.classList.add('message-download-other');
     }
-    messageDisplay.appendChild(downLoadElement)
+    addMessageToDisplay(downLoadElement, isAddToBottom)
 }
 
 function getFileMessageElement(message) {
@@ -422,31 +450,38 @@ function getFileMessageElement(message) {
     return fileElement
 }
 
-function displayMessage(message) {
+function displayMessage(message, isAddToBottom = true) {
     // console.log("display message", message)
-    insertSendTime(message)
+    if (isAddToBottom) {
+        insertSendTime(message, isAddToBottom)
+    }
     switch (message.type) {
         case "notice":
-            displayNoticeElement(message)
+            displayNoticeElement(message, isAddToBottom)
             if (!pageVisibility) {
                 browserNotify(`[${chatRoom}]房间通知`, message.content)
             }
             break;
         case "image":
-            displayProfileElement(message, getImageMessageElement(message))
+            displayProfileElement(message, getImageMessageElement(message), isAddToBottom)
             if (!pageVisibility) {
                 browserNotify(`[${chatRoom}]${message.userName}`, "发送了一张图片")
             }
             break;
         case "file":
-            displayProfileElement(message, getFileMessageElement(message))
-            displayDownloadElement(message)
+            if (!isAddToBottom) {
+                displayDownloadElement(message, isAddToBottom)
+            }
+            displayProfileElement(message, getFileMessageElement(message), isAddToBottom)
+            if (isAddToBottom) {
+                displayDownloadElement(message, isAddToBottom)
+            }
             if (!pageVisibility) {
                 browserNotify(`[${chatRoom}]${message.userName}`, "上传了一个文件")
             }
             break;
         case "text":
-            displayProfileElement(message, getNormalMessage(message))
+            displayProfileElement(message, getNormalMessage(message), isAddToBottom)
             if (!pageVisibility) {
                 browserNotify(`[${chatRoom}]${message.userName}`, message.content)
             }
@@ -454,14 +489,15 @@ function displayMessage(message) {
         default:
             console.log("unknown message type", message)
     }
-    // if (message.type === "image") {
-    //     displayProfileElement(message, getImageMessageElement(message))
-    // } else if (message.type === "file") {
-    //     displayProfileElement(message,getFileMessageElement(message))
-    //     displayDownloadElement(message)
-    // } else if (message.type === "text" || message.type === "") {
-    //     displayProfileElement(message, getNormalMessage(message))
-    // }
+    if (!isAddToBottom) {
+        insertSendTime(message, isAddToBottom)
+    }
+}
+
+function handleHistoryMessage(message) {
+    if (message.type === "text" || message.type === "image" || message.type === "file" || message.type === "notice") {
+        displayMessage(message, false)
+    }
 }
 
 function handleMessage(message) {
@@ -482,10 +518,8 @@ function handleMessage(message) {
             }
         }
     } else if (message.type === "userCount") {
-        console.log("userCount", message.data)
         document.getElementById("userCount").textContent = "在线用户数：" + message.data
     } else if (message.type === "roomList") {
-        console.log("roomList", message.data)
         handleRoomList(message.data)
     } else if (message.type === "userList") {
         handleUserList(message.data)
@@ -493,7 +527,6 @@ function handleMessage(message) {
 }
 
 function handleUserList(userList) {
-    console.log("userList", userList)
     const userElement = document.getElementById("drop-user-list")
     userElement.innerHTML = ""
     for (let i = 0; i < userList.length; i++) {
@@ -542,7 +575,6 @@ function getTimeInterval(time, isNotice) {
     var interval = currentDate - lastDate;
     if (interval > 1000 * 60 * 5) {
         lastTime = time;
-        // 如果是今天的消息，不显示年月日，只显示时分
         return getOkTimeText(currentDate, time);
     }
     if (isNotice) {
@@ -551,7 +583,15 @@ function getTimeInterval(time, isNotice) {
     return "";
 }
 
-function insertSendTime(message) {
+function addMessageToDisplay(item, isAddToBottom) {
+    if (isAddToBottom) {
+        messageDisplay.appendChild(item);
+    } else {
+        messageDisplay.insertBefore(item, messageDisplay.firstChild);
+    }
+}
+
+function insertSendTime(message, isAddToBottom) {
     const time = getTimeInterval(message.sendTime, message.type === "notice");
     if (time === "") {
         return
@@ -560,34 +600,34 @@ function insertSendTime(message) {
     timeElement.classList.add("message-time-text")
     timeElement.textContent = time;
     timeElement.classList.add('send-time');
-    messageDisplay.appendChild(timeElement);
+    addMessageToDisplay(timeElement, isAddToBottom);
 }
 
 function initSocket() {
-    closeSocket();
+    closeSocket()
     lastTime = ""
     socket = new WebSocket('ws://' + window.location.host + '/ws?id=' + userId + '&chatroom=' + chatRoom);
     // Event listener for receiving messages from the server
     socket.onmessage = function (event) {
         var messages = JSON.parse(event.data); // Parse the JSON data into an array
         messages.forEach(function (message) { // Iterate over each message in the array
-            console.log(message)
+            // console.log(message)
             handleMessage(message);
         });
         // Scroll to the bottom of the message display
         // messageDisplay.scrollTop = messageDisplay.scrollHeight;
     };
     socket.onopen = function (event) {
-        console.log("socket open", event)
+        // console.log("socket open", event)
         document.title = `Chat Room - ${chatRoom}`;
     };
     // 自动重连
     socket.onclose = function (event) {
         if (socket.readyState === WebSocket.CLOSED) {
-            console.log("socket close", event)
+            // console.log("socket close", event)
             setTimeout(function () {
                 showToast("连接断开，尝试重新连接...", {duration: 3000});
-                connectToChatRoom(chatRoom);
+                connectToChatRoom(chatRoom, true);
             }, 5000);
         }
     };
@@ -631,7 +671,7 @@ function tryConnectToChatRoom(callback) {
             console.log(data);
             if (data.errorCode !== 0) {
                 if (data.errorCode === 7) {// 重复登录
-                    showToast("账号已在其他地方登录，请退出其他页面")
+                    showToast("账号已超过三个地方登录，请退出其他页面")
                     sleep(1500).then(() => {
                         goLoginPage()
                     })
@@ -664,9 +704,14 @@ function connectToChatRoomInternal(room) {
     getHistoryMessages();
     // Get the room list
     getRoomList();
+    // Initialize the WebSocket connection
+    initSocket();
 }
 
-function connectToChatRoom(room) {
+function connectToChatRoom(room, isRetry = false) {
+    messageIndex = 0
+    hasMoreMessage = true
+    hasLoadedHistory = false
     tryConnectToChatRoom(function () {
         connectToChatRoomInternal(room)
     })

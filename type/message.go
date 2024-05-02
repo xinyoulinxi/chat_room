@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/bwmarrin/snowflake"
+	"log/slog"
 	"math/rand"
 	"time"
 )
@@ -142,6 +143,26 @@ func (m *Messages) LastN(n int) []Message {
 	}
 }
 
+// IndexN 返回末尾index*n-n到index*n的消息，如果消息数量不足则返回剩下的消息
+func (m *Messages) IndexN(index int, n int) []Message {
+	index = len(*m)/n - index + 1
+	start := (index - 1) * n
+	slog.Info("IndexN", "start", start, "len", len(*m))
+	if start >= len(*m) {
+		return nil
+	}
+	end := start + n
+	if start < 0 && end > 0 {
+		return (*m)[0:end]
+	}
+	if start < 0 {
+		return nil
+	}
+	if end >= len(*m) {
+		return (*m)[start:]
+	}
+	return (*m)[start:end]
+}
 func (m *Messages) Serialize() ([]byte, error) {
 	bytes, err := json.Marshal(m)
 	if err != nil {

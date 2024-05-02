@@ -11,7 +11,7 @@ import (
 
 var userList = make([]*chat_type.User, 0)
 var userMap = make(map[string]*chat_type.User)
-var userStatusMap = make(map[string]bool)
+var userStatusMap = make(map[string]int)
 
 func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	// 确保关闭请求体
@@ -64,7 +64,7 @@ func updateUserInfosFromLocalFile() {
 }
 
 func IsUserOnline(userId string) bool {
-	if status, ok := userStatusMap[userId]; ok && status {
+	if status, ok := userStatusMap[userId]; ok && status > 3 {
 		slog.Info("IsUserOnline", "userName", GetUserById(userId).UserName, "status", userStatusMap[userId], "ok", ok)
 		return true
 	}
@@ -74,12 +74,20 @@ func IsUserOnline(userId string) bool {
 
 func UserLoginIn(userId string) {
 	slog.Info("UserLoginIn", "userName", GetUserById(userId).UserName)
-	userStatusMap[userId] = true
+	if status, ok := userStatusMap[userId]; ok && status < 3 {
+		userStatusMap[userId]++
+	} else {
+		userStatusMap[userId] = 1
+	}
 }
 
 func UserLoginOut(userId string) {
 	slog.Info("UserLoginOut", "userName", GetUserById(userId).UserName)
-	userStatusMap[userId] = false
+	if status, ok := userStatusMap[userId]; ok && status > 0 {
+		userStatusMap[userId]--
+	} else {
+		userStatusMap[userId] = 0
+	}
 }
 
 func GetUserAvatarHandler(w http.ResponseWriter, r *http.Request) {

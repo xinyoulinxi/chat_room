@@ -17,4 +17,5 @@ const (
 	ErrorPasswordError   = 5
 	ErrorInvalidPassword = 6
 	ErrorUserHasOnline   = 7
+	ErrorNoMoreMessages  = 8
 )
