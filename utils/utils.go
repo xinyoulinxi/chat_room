@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"github.com/h2non/filetype"
 	"log/slog"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -17,6 +18,14 @@ func GetRandomString(length int) string {
 		b[i] = charset[time.Now().UnixNano()%int64(len(charset))]
 	}
 	return string(b)
+}
+
+func GetCookieValue(r *http.Request, key string) string {
+	cookie, err := r.Cookie(key)
+	if err != nil {
+		return ""
+	}
+	return cookie.Value
 }
 
 // SaveFile 根据Base64编码的数据和推断的文件类型保存文件

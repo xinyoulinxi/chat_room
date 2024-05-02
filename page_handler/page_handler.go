@@ -93,6 +93,8 @@ func StartWebServer() {
 	// login
 	mux.HandleFunc("/login_user", user.LoginHandler)
 
+	// connect chat room
+	mux.HandleFunc("/connect", chat_room.ConnectChatRoomHandler)
 	// upload file
 	mux.HandleFunc("/upload_file", chat_room.UploadFileHandler)
 

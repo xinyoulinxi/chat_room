@@ -7,6 +7,7 @@ import (
 	"sync"
 	chat_db "web_server/db"
 	chat_type "web_server/type"
+	"web_server/user"
 )
 
 const maxHistoryCount = 100
@@ -61,6 +62,7 @@ func (h *Room) onClientLeave(c *Client) {
 	h.broadRoomUserCountMessage(count - 1)
 	h.BroadCast(chat_type.NewNoticeMessage(c.UserName + "离开聊天室"))
 	h.BroadCast(chat_type.NewUserListMessage(h.getUserList()))
+	user.UserLoginOut(c.UserID)
 }
 
 // UserJoin 将用户加入房间

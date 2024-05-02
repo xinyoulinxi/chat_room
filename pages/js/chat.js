@@ -1,4 +1,3 @@
-
 var userId = getCookie("userId")
 var userName = getCookie("userName")
 var chatRoom = localStorage.getItem("chatRoom");
@@ -23,13 +22,11 @@ function goProfile() {
 
 function init() {
     initPopupMenu()
-    initUserList()
-    messageInput.addEventListener('keydown', function (event) {
-        if (!event.isComposing && event.key === 'Enter') {
-            event.preventDefault(); // Prevent form submission
-            sendMessage();
-        }
-    });
+    initListener()
+    connectToChatRoom(chatRoom);
+}
+
+function initListener() {
     messageInput.addEventListener('paste', function (event) {
         // 检查粘贴的内容是否为图片
         if (event.clipboardData.items && event.clipboardData.items[0].type.startsWith('image/')) {
@@ -74,7 +71,13 @@ function init() {
             reader.readAsDataURL(file);
         }
     })
-
+    // 监听发送消息按钮
+    messageInput.addEventListener('keydown', function (event) {
+        if (!event.isComposing && event.key === 'Enter') {
+            event.preventDefault(); // Prevent form submission
+            sendMessage();
+        }
+    });
     // 监听页面显示状态，离开页面时增加消息记数且阻止消息滚动，重新进入页面后重置记数并自动滚动到底部最新消息
     document.addEventListener('visibilitychange', function () {
         switch (document.visibilityState) {
@@ -95,7 +98,6 @@ function init() {
     })
     // Focus on the message input field
     messageInput.focus();
-    connectToChatRoom(chatRoom);
 }
 
 function initUserList() {
@@ -122,7 +124,7 @@ function initUserList() {
 
 function initPopupMenu() {
     createChatRoomBtn.addEventListener('click', createRoom);
-    unLoginBtn.addEventListener('click', goLoginPage);
+    unLoginBtn.addEventListener('click', unLogin);
     profileBtn.addEventListener('click', goProfile);
 
     var button = document.getElementById('menu-button');
@@ -146,6 +148,7 @@ function initPopupMenu() {
         }
     });
 }
+
 /**
  * 发送浏览器通知
  * @param title 标题
@@ -548,7 +551,6 @@ function getTimeInterval(time, isNotice) {
     return "";
 }
 
-
 function insertSendTime(message) {
     const time = getTimeInterval(message.sendTime, message.type === "notice");
     if (time === "") {
@@ -559,7 +561,6 @@ function insertSendTime(message) {
     timeElement.textContent = time;
     timeElement.classList.add('send-time');
     messageDisplay.appendChild(timeElement);
-
 }
 
 function initSocket() {
@@ -570,7 +571,7 @@ function initSocket() {
     socket.onmessage = function (event) {
         var messages = JSON.parse(event.data); // Parse the JSON data into an array
         messages.forEach(function (message) { // Iterate over each message in the array
-            // console.log(message)
+            console.log(message)
             handleMessage(message);
         });
         // Scroll to the bottom of the message display
@@ -583,7 +584,7 @@ function initSocket() {
     // 自动重连
     socket.onclose = function (event) {
         if (socket.readyState === WebSocket.CLOSED) {
-            console.log("socket close")
+            console.log("socket close", event)
             setTimeout(function () {
                 showToast("连接断开，尝试重新连接...", {duration: 3000});
                 connectToChatRoom(chatRoom);
@@ -621,7 +622,31 @@ function goLoginPage() {
     window.location.href = "/login";
 }
 
-function connectToChatRoom(room) {
+function tryConnectToChatRoom(callback) {
+    fetch('/connect', {
+        credentials: 'include'  // Include cookies in the request
+    })
+        .then(response => response.json())
+        .then(data => {
+            console.log(data);
+            if (data.errorCode !== 0) {
+                if (data.errorCode === 7) {// 重复登录
+                    showToast("账号已在其他地方登录，请退出其他页面")
+                    sleep(1500).then(() => {
+                        goLoginPage()
+                    })
+                } else {
+                    showToast(data.message);
+                }
+            } else {
+                showToast("连接成功，欢迎你，" + userName)
+                callback()
+            }
+        });
+}
+
+function connectToChatRoomInternal(room) {
+    initUserList()
     // Check if the userId or room number is empty
     chatRoom = room;
     localStorage.setItem("chatRoom", chatRoom);
@@ -639,6 +664,12 @@ function connectToChatRoom(room) {
     getHistoryMessages();
     // Get the room list
     getRoomList();
+}
+
+function connectToChatRoom(room) {
+    tryConnectToChatRoom(function () {
+        connectToChatRoomInternal(room)
+    })
 }
 
 // Function to send a message

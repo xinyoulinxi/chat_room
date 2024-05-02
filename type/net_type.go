@@ -16,4 +16,5 @@ const (
 	ErrorUserNotExist    = 4
 	ErrorPasswordError   = 5
 	ErrorInvalidPassword = 6
+	ErrorUserHasOnline   = 7
 )

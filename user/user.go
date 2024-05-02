@@ -11,6 +11,7 @@ import (
 
 var userList = make([]*chat_type.User, 0)
 var userMap = make(map[string]*chat_type.User)
+var userStatusMap = make(map[string]bool)
 
 func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	// 确保关闭请求体
@@ -60,6 +61,25 @@ func updateUserInfosFromLocalFile() {
 	for _, user := range userList {
 		userMap[user.UserID] = user
 	}
+}
+
+func IsUserOnline(userId string) bool {
+	if status, ok := userStatusMap[userId]; ok && status {
+		slog.Info("IsUserOnline", "userName", GetUserById(userId).UserName, "status", userStatusMap[userId], "ok", ok)
+		return true
+	}
+	slog.Info("IsUserOnline", "userName", GetUserById(userId).UserName, "status", false)
+	return false
+}
+
+func UserLoginIn(userId string) {
+	slog.Info("UserLoginIn", "userName", GetUserById(userId).UserName)
+	userStatusMap[userId] = true
+}
+
+func UserLoginOut(userId string) {
+	slog.Info("UserLoginOut", "userName", GetUserById(userId).UserName)
+	userStatusMap[userId] = false
 }
 
 func GetUserAvatarHandler(w http.ResponseWriter, r *http.Request) {
@@ -112,7 +132,7 @@ func UpdateProfileHandler(w http.ResponseWriter, r *http.Request) {
 	//newName := profileData.NewUsername
 	newPass := profileData.NewPassword
 
-	slog.Info("LoginHandler", "username", userName, "password", passWord)
+	slog.Info("UpdateProfileHandler", "username", userName, "password", passWord)
 	if userName == "" || passWord == "" || newPass == "" {
 		utils.WriteResponse(w, chat_type.ErrorInvalidInput, "Blank input")
 		return

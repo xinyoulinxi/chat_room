@@ -167,6 +167,29 @@ func ChatRoomListHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	utils.WriteResponseWithData(w, chat_type.ErrorCodeSuccess, "Success", jsonMsg)
 }
+func ConnectChatRoomHandler(w http.ResponseWriter, r *http.Request) {
+	// 获取cookie
+	slog.Info("ConnectChatRoomHandler", "cookie", r.Cookies())
+	// 获取cookie中的参数,比如id和chatroom
+	id := utils.GetCookieValue(r, "userId")
+	userName := utils.GetCookieValue(r, "userName")
+	if id == "" || userName == "" {
+		utils.WriteResponse(w, chat_type.ErrorInvalidInput, "Invalid user id or user name")
+		return
+	}
+	// 检查用户是否存在
+	if !user.UserRegisted(id) {
+		utils.WriteResponse(w, chat_type.ErrorUserNotExist, "User not exist")
+		return
+	}
+	// 检查用户是否在线
+	if user.IsUserOnline(id) {
+		slog.Info("IsUserOnline", "isLogin", user.IsUserOnline(id))
+		utils.WriteResponse(w, chat_type.ErrorUserHasOnline, "User already online")
+		return
+	}
+	utils.WriteResponse(w, chat_type.ErrorCodeSuccess, "Success")
+}
 
 // ChatRoomHandler 处理用户加入房间
 func ChatRoomHandler(w http.ResponseWriter, r *http.Request) {
@@ -196,6 +219,6 @@ func ChatRoomHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to upgrade connection to WebSocket", http.StatusInternalServerError)
 		return
 	}
-
+	user.UserLoginIn(id)
 	room.UserJoin(conn, user.GetUserById(id))
 }
