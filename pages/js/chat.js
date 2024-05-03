@@ -183,6 +183,9 @@ function browserNotify(title, message) {
 }
 
 function getHistoryMessages(isFirstFetch = true) {
+    if (!hasMoreMessage) {
+        return
+    }
     console.log("getHistoryMessages", messageIndex, isFirstFetch)
     fetch('/history_messages', {
         method: 'POST',
